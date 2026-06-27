@@ -126,8 +126,19 @@ Default behavior:
 - Fetch raw pages into `raw/<timestamp>/`.
 - Build complete parsed archive with `build_x_archive_report.py`.
 - Write report files under `reports/`.
+- Write a reviewable candidate update under
+  `long_term_views/pending_updates/<date>.md`.
+- Commit only that pending update file if it changed. Use `--no-git-commit`
+  for local dry runs.
 - Update `state/memory.md`.
 - Print `reports/latest_summary.md` to stdout.
 
 This script never sends Feishu directly. The investment suite cron sends the
 final digest via Atlas.
+
+Generate only the long-term-view candidate from an existing report:
+
+```bash
+python3 -B /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/update_long_term_candidates.py \
+  --report /Users/wronsky/Documents/codes/serenity-x-monitor/reports/latest_summary.md
+```

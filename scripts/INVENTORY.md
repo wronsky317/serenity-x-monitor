@@ -92,9 +92,31 @@ Important behavior:
 
 - Looks back 30 hours by default.
 - Calls `run_pipeline.py --parser archive`.
+- Generates `long_term_views/pending_updates/<date>.md`.
+- Commits only that pending update file if it changed. Pass
+  `--no-git-commit` to disable this during manual dry runs.
 - Updates `state/memory.md`.
 - Prints `reports/latest_summary.md`.
 - Does not send Feishu directly.
+
+### `scripts/update_long_term_candidates.py`
+
+Purpose: Convert the latest report into a reviewable long-term-view candidate
+without touching the maintained asset map.
+
+Typical use:
+
+```bash
+python3 -B /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/update_long_term_candidates.py \
+  --report /Users/wronsky/Documents/codes/serenity-x-monitor/reports/latest_summary.md
+```
+
+Output:
+
+- `long_term_views/pending_updates/<date>.md`
+
+The file is a commit-safe summary for later manual merge into
+`long_term_views/serenity_core_asset_map.md`.
 
 ## Optional / Specialist Scripts
 

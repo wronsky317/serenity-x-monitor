@@ -7,6 +7,8 @@ This script is intentionally deterministic:
 - writes complete parsed markdown under parsed/<timestamp>.md,
 - writes a Feishu-friendly report under reports/<timestamp>_report.md and
   reports/latest_summary.md,
+- writes a reviewable long-term-view candidate under
+  long_term_views/pending_updates/<date>.md,
 - updates state/memory.md.
 
 It does not send Feishu directly. Hermes/Atlas sends the suite digest.
@@ -70,6 +72,67 @@ def read_manifest(raw_run: str) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def generate_pending_update(outputs: dict[str, str], raw_run: str) -> dict[str, str]:
+    report_path = outputs.get("latest") or outputs.get("report") or str(LATEST_REPORT)
+    command = [
+        sys.executable,
+        "-B",
+        str(SCRIPTS_DIR / "update_long_term_candidates.py"),
+        "--report",
+        report_path,
+        "--raw-run",
+        raw_run,
+        "--detailed",
+        outputs.get("detailed", ""),
+        "--date",
+        now_cst().strftime("%Y-%m-%d"),
+    ]
+    completed = run(command)
+    if completed.returncode != 0:
+        return {
+            "pending_update_status": f"failed exit={completed.returncode}",
+            "pending_update_error": (completed.stderr or completed.stdout).strip(),
+        }
+    values = parse_key_values(completed.stdout)
+    values["pending_update_status"] = "ok"
+    return values
+
+
+def git_commit_pending_update(path_text: str) -> str:
+    if not path_text:
+        return "skipped (no pending update path)"
+    path = Path(path_text).expanduser()
+    if not path.exists():
+        return f"skipped (missing {path})"
+    try:
+        relative = path.resolve().relative_to(PROJECT_ROOT)
+    except ValueError:
+        return "skipped (pending update outside project)"
+
+    add = run(["git", "add", "--", str(relative)])
+    if add.returncode != 0:
+        return f"add_failed: {(add.stderr or add.stdout).strip()}"
+
+    diff = run(["git", "diff", "--cached", "--quiet", "--", str(relative)])
+    if diff.returncode == 0:
+        return "skipped (no staged change)"
+
+    commit = run(
+        [
+            "git",
+            "commit",
+            "-m",
+            f"Add Serenity pending long-term update {path.stem}",
+            "--",
+            str(relative),
+        ]
+    )
+    if commit.returncode != 0:
+        return f"commit_failed: {(commit.stderr or commit.stdout).strip()}"
+    first_line = commit.stdout.splitlines()[0] if commit.stdout.splitlines() else "committed"
+    return first_line
+
+
 def append_memory(
     *,
     since: str,
@@ -78,6 +141,8 @@ def append_memory(
     outputs: dict[str, str],
     manifest: dict,
     status: str,
+    pending_update: dict[str, str] | None = None,
+    git_status: str = "",
 ) -> None:
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     old = STATE_FILE.read_text(encoding="utf-8", errors="replace") if STATE_FILE.exists() else ""
@@ -92,6 +157,9 @@ def append_memory(
         f"Parsed archive: `{outputs.get('detailed', '')}`",
         f"Report: `{outputs.get('report', '')}`",
         f"Latest report: `{outputs.get('latest', '')}`",
+        f"Pending long-term update: `{(pending_update or {}).get('pending_update', '')}`",
+        f"Pending update status: `{(pending_update or {}).get('pending_update_status', '')}`",
+        f"Git pending update commit: `{git_status}`",
         f"Feed rows deduped: `{manifest.get('rowCountDeduped', '')}`",
         f"Serenity rows: `{manifest.get('matchedHandleRowCount', '')}`",
         f"Stopped after since reached: `{manifest.get('stoppedAfterSinceReached', '')}`",
@@ -106,6 +174,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--take", type=int, default=50)
     parser.add_argument("--max-pages", type=int, default=120)
     parser.add_argument("--handle", default="aleabitoreddit")
+    parser.add_argument(
+        "--no-git-commit",
+        action="store_true",
+        help="Write the pending long-term update but do not commit it.",
+    )
     return parser.parse_args(argv)
 
 
@@ -149,6 +222,10 @@ def main(argv: list[str] | None = None) -> int:
     values = parse_key_values(completed.stdout)
     raw_run = values.get("raw", "")
     manifest = read_manifest(raw_run) if raw_run else {}
+    pending_update = generate_pending_update(values, raw_run)
+    git_status = "skipped (--no-git-commit)"
+    if not args.no_git_commit and pending_update.get("pending_update_status") == "ok":
+        git_status = git_commit_pending_update(pending_update.get("pending_update", ""))
     append_memory(
         since=since,
         until=until,
@@ -156,7 +233,12 @@ def main(argv: list[str] | None = None) -> int:
         outputs=values,
         manifest=manifest,
         status="ok",
+        pending_update=pending_update,
+        git_status=git_status,
     )
+
+    if pending_update.get("pending_update_status") != "ok":
+        print(pending_update.get("pending_update_error", ""), file=sys.stderr)
 
     if LATEST_REPORT.exists():
         print(LATEST_REPORT.read_text(encoding="utf-8", errors="replace"), end="")

@@ -25,6 +25,8 @@ Other agents should start from:
 - [state/memory.md](state/memory.md): last-run memory and cursor notes.
 - [long_term_views/](long_term_views/): maintained long-term thesis and core
   asset maps derived from Serenity's public-view framework.
+- [long_term_views/pending_updates/](long_term_views/pending_updates/):
+  auto-generated candidate thesis updates for later manual merge.
 - [scripts/INVENTORY.md](scripts/INVENTORY.md): archived script inventory and
   calling conventions.
 
@@ -40,7 +42,8 @@ runtime artifacts and are ignored by git by default:
 - `state/`
 
 Safe-to-commit files are source code, prompts, docs, `.codexignore`,
-`.gitignore`, and `codex_cli_privacy.toml`.
+`.gitignore`, `codex_cli_privacy.toml`, and reviewed summaries under
+`long_term_views/`, including `long_term_views/pending_updates/`.
 
 ## Daily Output
 
@@ -79,11 +82,12 @@ Use the local sender helper:
 
 ## Schedule
 
-Codex automation: `track-serenity-x-posts`
+Hermes investment suite automation:
 
-- Runs daily at 21:00 Asia/Shanghai.
+- Runs daily at 21:15 Asia/Shanghai.
 - Working directory: `/Users/wronsky/Documents/codes/serenity-x-monitor`.
 - Writes report to `reports/latest_summary.md`.
+- Writes and commits candidate updates under `long_term_views/pending_updates/`.
 - Updates memory at `state/memory.md`.
 
 ## Known Limits

@@ -16,15 +16,17 @@ You are running the Serenity X monitor.
 2. That script is the source of truth. It fetches raw Supercycle/X data, writes
    `raw/<timestamp>/`, builds a complete row-by-row archive at
    `parsed/<timestamp>.md`, writes `reports/<timestamp>_report.md`, updates
-   `reports/latest_summary.md`, and prepends `state/memory.md`.
+   `reports/latest_summary.md`, writes a reviewable long-term-view candidate to
+   `long_term_views/pending_updates/<date>.md`, commits only that pending file
+   to git when it changed, and prepends `state/memory.md`.
 3. Do not replace the scheduled workflow with ad-hoc web searching unless the
    script fails and the failure reason is included in the report.
 4. During Hermes scheduled runs, do not call `scripts/send_feishu_text.py`; write
    the report locally and let Hermes cron deliver the final suite response to
    Feishu via Atlas. For manual fallback only, `bin/send_latest.sh` can send to
    the same chat id.
-5. Maintain durable thesis updates under `long_term_views/` only when the daily
-   run changes a long-term view. Follow
+5. Do not directly edit `long_term_views/serenity_core_asset_map.md` during a
+   daily run. Review pending files and merge them manually according to
    `long_term_views/maintenance_rules.md`.
 
 ## Report Requirements

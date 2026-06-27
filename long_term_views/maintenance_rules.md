@@ -32,7 +32,10 @@ or date range used for the update.
 
 ## Update Triggers
 
-Update `long_term_views/serenity_core_asset_map.md` when one of these happens:
+Generate a candidate update under `long_term_views/pending_updates/<date>.md`
+when the daily run completes. Merge it into
+`long_term_views/serenity_core_asset_map.md` only after review when one of these
+happens:
 
 - Serenity explicitly reinforces or weakens a core theme.
 - A company moves from casual mention to direct beneficiary, supplier, customer,
@@ -64,6 +67,8 @@ media view into a recommendation.
 
 - `long_term_views/` is commit-safe because it contains summarized thesis work,
   not raw tweet dumps.
+- `long_term_views/pending_updates/` is also commit-safe, but it is a staging
+  area rather than the maintained source of truth.
 - Do not paste full raw JSON or long verbatim post text.
 - Keep raw captures in `raw/`, parsed archives in `parsed/`, generated reports
   in `reports/`, and runtime state in `state/`.
@@ -76,7 +81,8 @@ Daily Hermes runs should:
 
 1. Execute `scripts/hermes_daily_archive.py`.
 2. Generate raw, parsed, and report artifacts.
-3. Send the suite digest through Hermes/Atlas.
-4. Only update `long_term_views/` if the daily run contains a durable thesis
-   change according to the update triggers above.
-
+3. Generate `long_term_views/pending_updates/<date>.md` from
+   `reports/latest_summary.md`.
+4. Commit only the pending update file if it changed.
+5. Send the suite digest through Hermes/Atlas.
+6. Never overwrite `long_term_views/serenity_core_asset_map.md` automatically.
