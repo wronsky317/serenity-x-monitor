@@ -23,6 +23,10 @@ Other agents should start from:
 - [prompts/daily_monitor.md](prompts/daily_monitor.md): daily monitoring prompt.
 - [reports/latest_summary.md](reports/latest_summary.md): latest sent or staged report.
 - [state/memory.md](state/memory.md): last-run memory and cursor notes.
+- [long_term_views/](long_term_views/): maintained long-term thesis and core
+  asset maps derived from Serenity's public-view framework.
+- [scripts/INVENTORY.md](scripts/INVENTORY.md): archived script inventory and
+  calling conventions.
 
 ## Git Privacy
 

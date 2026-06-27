@@ -23,6 +23,9 @@ You are running the Serenity X monitor.
    the report locally and let Hermes cron deliver the final suite response to
    Feishu via Atlas. For manual fallback only, `bin/send_latest.sh` can send to
    the same chat id.
+5. Maintain durable thesis updates under `long_term_views/` only when the daily
+   run changes a long-term view. Follow
+   `long_term_views/maintenance_rules.md`.
 
 ## Report Requirements
 
