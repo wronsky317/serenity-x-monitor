@@ -1,0 +1,33 @@
+# OS / editor noise
+.DS_Store
+__pycache__/
+*.py[cod]
+*.log
+*.tmp
+
+# Local environment / credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.token
+*.secret
+
+# Private capture and generated analysis artifacts.
+# These files may contain raw X post text, handles, timestamps, Feishu chat ids,
+# local paths, or model-generated interpretations. Keep them local by default.
+raw/*
+parsed/*
+reports/*
+state/*
+
+# Keep directory placeholders and public docs if added later.
+!raw/.gitkeep
+!parsed/.gitkeep
+!reports/.gitkeep
+!state/.gitkeep
+!reports/README.md
+
+# Codex CLI scratch output
+*.codex_output.md

@@ -1,0 +1,20 @@
+# Privacy-oriented context exclusions for Codex CLI / future agents.
+# The scripts are safe to inspect; captured source data and generated reports
+# should only be read when a task explicitly needs them.
+
+raw/**
+parsed/**
+reports/**
+state/**
+
+.env
+.env.*
+*.pem
+*.key
+*.token
+*.secret
+*.codex_output.md
+
+.git/**
+.DS_Store
+__pycache__/**

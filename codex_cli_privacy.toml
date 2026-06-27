@@ -1,0 +1,66 @@
+# Serenity X Monitor - Codex CLI privacy config
+#
+# This file is safe to commit. It documents the privacy boundary for future
+# Codex CLI / agent runs and for git review before publishing this repository.
+# It is intentionally declarative: scripts may read it later, and humans/agents
+# should treat it as the source of truth for what must stay local.
+
+[project]
+name = "serenity-x-monitor"
+root = "/Users/wronsky/Documents/codes/serenity-x-monitor"
+
+[codex_cli]
+# The parser script calls `codex exec` in read-only sandbox mode. Keep it that
+# way: parsing should read raw captures and write only through the wrapper
+# script, not directly through Codex-generated shell commands.
+default_sandbox = "read-only"
+network_during_parse = false
+
+[privacy]
+# Directories below are local artifacts. They are intentionally ignored by git.
+private_dirs = [
+  "raw/",
+  "parsed/",
+  "reports/",
+  "state/",
+]
+
+# These files or patterns should not be committed.
+private_patterns = [
+  ".env",
+  ".env.*",
+  "*.pem",
+  "*.key",
+  "*.token",
+  "*.secret",
+  "*.codex_output.md",
+]
+
+# Commit-safe paths are source code, prompts, docs, and this privacy config.
+commit_safe_paths = [
+  ".gitignore",
+  ".codexignore",
+  "codex_cli_privacy.toml",
+  "AGENT.md",
+  "AGENTS.md",
+  "README.md",
+  "bin/",
+  "prompts/",
+  "scripts/",
+]
+
+[git_preflight]
+# Suggested check before commit:
+#   git status --short
+#   git check-ignore -v raw/* parsed/* reports/* state/*
+#   git diff --cached --name-only
+#
+# If raw/parsed/reports/state files appear in `git status`, fix .gitignore or
+# unstage them before committing.
+block_if_tracked_patterns = [
+  "raw/",
+  "parsed/",
+  "reports/",
+  "state/",
+  ".env",
+]
