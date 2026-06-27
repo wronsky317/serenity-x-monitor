@@ -87,7 +87,8 @@ Hermes investment suite automation:
 - Runs daily at 21:15 Asia/Shanghai.
 - Working directory: `/Users/wronsky/Documents/codes/serenity-x-monitor`.
 - Writes report to `reports/latest_summary.md`.
-- Writes and commits candidate updates under `long_term_views/pending_updates/`.
+- Writes, commits, and pushes candidate updates under
+  `long_term_views/pending_updates/`.
 - Updates memory at `state/memory.md`.
 
 ## Known Limits

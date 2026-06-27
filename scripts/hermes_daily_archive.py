@@ -9,6 +9,7 @@ This script is intentionally deterministic:
   reports/latest_summary.md,
 - writes a reviewable long-term-view candidate under
   long_term_views/pending_updates/<date>.md,
+- commits and pushes the pending candidate when it changed,
 - updates state/memory.md.
 
 It does not send Feishu directly. Hermes/Atlas sends the suite digest.
@@ -133,6 +134,21 @@ def git_commit_pending_update(path_text: str) -> str:
     return first_line
 
 
+def git_push_current_branch() -> str:
+    branch = run(["git", "branch", "--show-current"])
+    if branch.returncode != 0:
+        return f"push_skipped (branch lookup failed): {(branch.stderr or branch.stdout).strip()}"
+    branch_name = branch.stdout.strip()
+    if not branch_name:
+        return "push_skipped (detached HEAD)"
+
+    pushed = run(["git", "push", "origin", branch_name])
+    if pushed.returncode != 0:
+        return f"push_failed: {(pushed.stderr or pushed.stdout).strip()}"
+    first_line = pushed.stderr.splitlines()[0] if pushed.stderr.splitlines() else ""
+    return first_line or f"pushed origin/{branch_name}"
+
+
 def append_memory(
     *,
     since: str,
@@ -143,6 +159,7 @@ def append_memory(
     status: str,
     pending_update: dict[str, str] | None = None,
     git_status: str = "",
+    git_push_status: str = "",
 ) -> None:
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     old = STATE_FILE.read_text(encoding="utf-8", errors="replace") if STATE_FILE.exists() else ""
@@ -160,6 +177,7 @@ def append_memory(
         f"Pending long-term update: `{(pending_update or {}).get('pending_update', '')}`",
         f"Pending update status: `{(pending_update or {}).get('pending_update_status', '')}`",
         f"Git pending update commit: `{git_status}`",
+        f"Git pending update push: `{git_push_status}`",
         f"Feed rows deduped: `{manifest.get('rowCountDeduped', '')}`",
         f"Serenity rows: `{manifest.get('matchedHandleRowCount', '')}`",
         f"Stopped after since reached: `{manifest.get('stoppedAfterSinceReached', '')}`",
@@ -178,6 +196,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--no-git-commit",
         action="store_true",
         help="Write the pending long-term update but do not commit it.",
+    )
+    parser.add_argument(
+        "--no-git-push",
+        action="store_true",
+        help="Commit the pending long-term update locally but do not push it.",
     )
     return parser.parse_args(argv)
 
@@ -224,8 +247,15 @@ def main(argv: list[str] | None = None) -> int:
     manifest = read_manifest(raw_run) if raw_run else {}
     pending_update = generate_pending_update(values, raw_run)
     git_status = "skipped (--no-git-commit)"
+    git_push_status = "skipped (no commit)"
     if not args.no_git_commit and pending_update.get("pending_update_status") == "ok":
         git_status = git_commit_pending_update(pending_update.get("pending_update", ""))
+        if git_status.startswith("["):
+            git_push_status = "skipped (--no-git-push)" if args.no_git_push else git_push_current_branch()
+        elif git_status.startswith("skipped"):
+            git_push_status = "skipped (no new commit)"
+        else:
+            git_push_status = "skipped (commit did not succeed)"
     append_memory(
         since=since,
         until=until,
@@ -235,6 +265,7 @@ def main(argv: list[str] | None = None) -> int:
         status="ok",
         pending_update=pending_update,
         git_status=git_status,
+        git_push_status=git_push_status,
     )
 
     if pending_update.get("pending_update_status") != "ok":

@@ -18,7 +18,8 @@ You are running the Serenity X monitor.
    `parsed/<timestamp>.md`, writes `reports/<timestamp>_report.md`, updates
    `reports/latest_summary.md`, writes a reviewable long-term-view candidate to
    `long_term_views/pending_updates/<date>.md`, commits only that pending file
-   to git when it changed, and prepends `state/memory.md`.
+   to git when it changed, pushes the current branch to `origin`, and prepends
+   `state/memory.md`.
 3. Do not replace the scheduled workflow with ad-hoc web searching unless the
    script fails and the failure reason is included in the report.
 4. During Hermes scheduled runs, do not call `scripts/send_feishu_text.py`; write

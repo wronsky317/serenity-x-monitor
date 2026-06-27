@@ -130,6 +130,8 @@ Default behavior:
   `long_term_views/pending_updates/<date>.md`.
 - Commit only that pending update file if it changed. Use `--no-git-commit`
   for local dry runs.
+- Push the current branch to `origin` after a successful pending update commit.
+  Use `--no-git-push` when you want to inspect the local commit first.
 - Update `state/memory.md`.
 - Print `reports/latest_summary.md` to stdout.
 

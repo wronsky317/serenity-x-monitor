@@ -84,5 +84,7 @@ Daily Hermes runs should:
 3. Generate `long_term_views/pending_updates/<date>.md` from
    `reports/latest_summary.md`.
 4. Commit only the pending update file if it changed.
-5. Send the suite digest through Hermes/Atlas.
-6. Never overwrite `long_term_views/serenity_core_asset_map.md` automatically.
+5. Push the current branch to `origin` so pending update status is visible from
+   git/GitHub.
+6. Send the suite digest through Hermes/Atlas.
+7. Never overwrite `long_term_views/serenity_core_asset_map.md` automatically.

@@ -95,6 +95,8 @@ Important behavior:
 - Generates `long_term_views/pending_updates/<date>.md`.
 - Commits only that pending update file if it changed. Pass
   `--no-git-commit` to disable this during manual dry runs.
+- Pushes the current branch to `origin` after a successful pending update
+  commit. Pass `--no-git-push` to keep the commit local.
 - Updates `state/memory.md`.
 - Prints `reports/latest_summary.md`.
 - Does not send Feishu directly.
