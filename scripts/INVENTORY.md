@@ -53,7 +53,9 @@ Outputs:
 - `reports/latest_summary.md`
 
 Use this for large backfills and daily scheduled runs because it does not
-collapse old rows.
+collapse old rows. The report output is content-first: it starts with core
+views, key interpretation, long-term thesis impact, and risks before showing
+fetch/archive metadata.
 
 ### `scripts/run_pipeline.py`
 
@@ -145,4 +147,3 @@ The investment suite cron uses a wrapper under `~/.hermes/scripts/` that calls:
 
 That suite script calls `scripts/hermes_daily_archive.py` for Serenity, then runs
 the Congress PTR monitor, then composes the Feishu digest.
-
