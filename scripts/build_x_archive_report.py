@@ -112,13 +112,49 @@ def has_word(text: str, word: str) -> bool:
     return re.search(rf"\b{re.escape(word)}\b", text) is not None
 
 
+def has_memory_anchor(text: str, tickers: list[str]) -> bool:
+    return (
+        "MU" in tickers
+        or has_word(text, "mu")
+        or has_word(text, "micron")
+        or "sk hynix" in text
+        or "samsung memory" in text
+        or "samsung hbm" in text
+    )
+
+
+def has_robotics_anchor(text: str) -> bool:
+    return any(
+        word in text
+        for word in [
+            "robotics",
+            "robot",
+            "robots",
+            "optimus",
+            "schaeffler",
+            "nabtesco",
+            "sanhua",
+            "actuator",
+            "actuators",
+            "gearbox",
+            "gearboxes",
+        ]
+    )
+
+
 def row_theme(row: dict[str, Any]) -> str:
     portfolio = row.get("portfolio")
     if isinstance(portfolio, dict) and isinstance(portfolio.get("theme"), str):
-        return portfolio["theme"]
+        theme = portfolio["theme"]
+        text = row_text(row).lower()
+        if theme == "SEMIS" and has_robotics_anchor(text) and not has_memory_anchor(text, row_tickers(row)):
+            return "EV"
+        return theme
     text = row_text(row).lower()
     if any(word in text for word in ["cpo", "photonics", "laser", "optical", "sive", "lite"]):
         return "PHOTONICS"
+    if has_robotics_anchor(text):
+        return "EV"
     if any(word in text for word in ["memory", "hbm", "dram", "nand", "micron", "sk hynix"]):
         return "SEMIS"
     if any(word in text for word in ["fed", "fomc", "treasury"]) or has_word(text, "rate"):
@@ -148,6 +184,8 @@ def zh_row_title(row: dict[str, Any]) -> str:
         return "SpaceX 线索强化光互连供应链与潜在并购目标"
     if "deepseek" in text_l or "distillation" in text_l or "kyc" in text_l:
         return "DeepSeek/模型蒸馏引出美国前沿模型访问控制问题"
+    if has_robotics_anchor(text_l):
+        return "机器人供应链与汽车零部件玩家的长期可选性"
     if "openai" in text_l and ("model" in text_l or "anthropic" in text_l):
         return "OpenAI 新模型叙事强化 AI 平台竞争观察"
     if "million+" in text_l and "sive" in text_l:
@@ -158,7 +196,7 @@ def zh_row_title(row: dict[str, Any]) -> str:
         or ("morgan stanley" in text_l and ("rate" in text_l or "fed" in text_l or "no-hike" in text_l))
     ):
         return "Morgan Stanley 维持不加息预测，利好长久期美债叙事"
-    if "memory" in text_l and ("mu" in text_l or "sk hynix" in text_l or "samsung" in text_l):
+    if any(word in text_l for word in ["memory", "hbm", "dram", "nand"]) and has_memory_anchor(text_l, tickers):
         return "AI memory/HBM 供需紧张继续强化"
     if "softbank" in text_l or "ipo" in text_l:
         return "SoftBank/OpenAI IPO 延迟带来 AI 资产估值风险提示"
@@ -188,6 +226,8 @@ def zh_row_takeaway(row: dict[str, Any]) -> str:
         view = "SpaceX 相关线索强化了光互连供应链的重要性，Serenity 将 LITE、SIVE、POET、MTSI 等放在光学供应商和潜在并购目标框架里。"
     elif "deepseek" in text_l or "distillation" in text_l or "kyc" in text_l:
         view = "AI 安全与模型蒸馏成为新增政策变量：低成本中国模型、账号滥用、前沿模型访问控制，会影响美国 AI 平台和推理成本竞争。"
+    elif has_robotics_anchor(text_l):
+        view = "Serenity 将 Schaeffler、Nabtesco、三花等汽车零部件/执行器玩家放进 humanoid/Optimus 供应链框架，核心是传统汽车业务估值拖累下的机器人收入可选性；但当前收入占比仍小，需要下游机器人龙头和 2027 之后放量验证。"
     elif "openai" in text_l and ("model" in text_l or "anthropic" in text_l):
         view = "OpenAI 新模型叙事被视为 AI 模型竞争重新加速的信号，但该条未形成可直接落地的组合，更多是 AI 平台竞争观察。"
     elif "million+" in text_l and "sive" in text_l:
@@ -198,7 +238,7 @@ def zh_row_takeaway(row: dict[str, Any]) -> str:
         or ("morgan stanley" in text_l and ("rate" in text_l or "fed" in text_l or "no-hike" in text_l))
     ):
         view = "宏观上偏向“年内不加息/利率压力缓和”，对应长久期美债 TLT、IEF 的顺风，但需要继续验证通胀和 Fed 口径。"
-    elif "memory" in text_l and ("mu" in text_l or "sk hynix" in text_l or "samsung" in text_l):
+    elif any(word in text_l for word in ["memory", "hbm", "dram", "nand"]) and has_memory_anchor(text_l, tickers):
         view = "Memory/HBM 结构性短缺继续被强化，MU、SK Hynix、Samsung 是核心表达；逻辑是 AI 需求、涨价和供给不足共同驱动。"
     elif "softbank" in text_l or "ipo" in text_l:
         view = "SoftBank/OpenAI IPO 延迟属于 AI 资产估值和流动性风险提示，更多是事件评论，不是明确新增做多主线。"
@@ -431,9 +471,8 @@ def build_report(raw_run: Path, rows: list[dict[str, Any]], manifest: dict[str, 
     month_counts: Counter[str] = Counter()
     for row in rows_sorted:
         month_counts[row_time(row)[:7] or "unknown"] += 1
-        portfolio = row.get("portfolio")
-        if isinstance(portfolio, dict) and portfolio.get("theme"):
-            theme_counts[str(portfolio["theme"])] += 1
+        if row_is_contentful(row):
+            theme_counts[row_theme(row)] += 1
         ticker_counts.update(row_tickers(row))
 
     content_rows = [row for row in rows_sorted if row_is_contentful(row)]
@@ -483,8 +522,11 @@ def build_report(raw_run: Path, rows: list[dict[str, Any]], manifest: dict[str, 
     joined_text = "\n".join(row_text(row).lower() for row in rows_sorted)
     if "sive" in joined_text:
         risk_lines.append("SIVE/光子链仍需客户披露、收入 ramp、Nasdaq listing 或供应链订单验证，不能只依赖 mapping。")
-    if "memory" in joined_text or "mu" in joined_text:
+    semis_rows = [row for row in rows_sorted if row_theme(row) == "SEMIS" and row_is_contentful(row)]
+    if any(has_memory_anchor(row_text(row).lower(), row_tickers(row)) for row in semis_rows):
         risk_lines.append("Memory/HBM 逻辑需要继续跟踪 Micron、SK Hynix、Samsung 的价格、capex 和供需指引。")
+    elif semis_rows:
+        risk_lines.append("半导体瓶颈线索需要继续区分封测、MLCC、DDR/CXL、OSAT 与 HBM，不应把所有 memory/semis 提及都合并成同一条 HBM thesis。")
     if "power semi" in joined_text or "800v" in joined_text:
         risk_lines.append("功率半导体 read-through 需要验证中国涨价是否持续，以及 800V DC/AI 数据中心电力链是否真正放量。")
     if "fed" in joined_text or "rate" in joined_text:
