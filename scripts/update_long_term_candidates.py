@@ -58,15 +58,13 @@ def section_map(markdown: str) -> dict[str, str]:
 
 def extract_coverage(intro: str) -> str:
     for line in intro.splitlines():
-        if "覆盖 `" in line and "命中 Serenity" in line:
-            return line.strip()
-        if "本次本地归档覆盖 `" in line:
+        if "覆盖" in line and "Serenity" in line and re.search(r"20\d{2}-\d{2}-\d{2}T", line):
             return line.strip()
     return "未在报告中识别到覆盖窗口。"
 
 
 def normalize_section(text: str, fallback: str) -> str:
-    text = text.strip()
+    text = "\n".join(line.rstrip() for line in text.strip().splitlines())
     return text if text else fallback
 
 
