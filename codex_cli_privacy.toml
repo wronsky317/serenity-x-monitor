@@ -10,9 +10,10 @@ name = "serenity-x-monitor"
 root = "/Users/wronsky/Documents/codes/serenity-x-monitor"
 
 [codex_cli]
-# The parser script calls `codex exec` in read-only sandbox mode. Keep it that
-# way: parsing should read raw captures and write only through the wrapper
-# script, not directly through Codex-generated shell commands.
+# Codex summary scripts call `codex exec` in read-only sandbox mode. Keep it
+# that way: Codex should read raw captures/archives and write only through the
+# wrapper script after marker validation, not directly through generated shell
+# commands.
 default_sandbox = "read-only"
 network_during_parse = false
 

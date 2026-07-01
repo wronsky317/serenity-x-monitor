@@ -4,7 +4,8 @@ Daily monitor for public X/Twitter account `Serenity` / `@aleabitoreddit`.
 
 This project is designed for Codex/agent execution, not as a fully automated
 browser scraper. The scheduled agent reads the project prompt, checks public
-sources, writes a Chinese daily report, sends it to Feishu, and updates memory.
+sources, writes a Chinese daily report with Codex CLI synthesis, sends it to
+Feishu, and updates memory.
 
 ## Purpose
 
@@ -87,6 +88,8 @@ Hermes investment suite automation:
 - Runs daily at 21:15 Asia/Shanghai.
 - Working directory: `/Users/wronsky/Documents/codes/serenity-x-monitor`.
 - Writes report to `reports/latest_summary.md`.
+- Uses deterministic parsing for complete row coverage, then Codex CLI for
+  report-level thesis synthesis.
 - Writes, commits, and pushes candidate updates under
   `long_term_views/pending_updates/`.
 - Updates memory at `state/memory.md`.

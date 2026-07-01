@@ -52,10 +52,35 @@ Outputs:
 - `reports/<timestamp>_report.md`
 - `reports/latest_summary.md`
 
-Use this for large backfills and daily scheduled runs because it does not
-collapse old rows. The report output is content-first: it starts with core
-views, key interpretation, long-term thesis impact, and risks before showing
-fetch/archive metadata.
+Use this for complete row coverage because it does not collapse old rows. Daily
+scheduled runs still call it first, but Codex CLI now owns the report-level
+thesis synthesis.
+
+### `scripts/summarize_x_archive_with_codex.py`
+
+Purpose: Ask Codex CLI to synthesize a Feishu-ready report from an existing
+deterministic parsed archive and raw metadata.
+
+Typical use:
+
+```bash
+python3 /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/summarize_x_archive_with_codex.py \
+  --raw-run /Users/wronsky/Documents/codes/serenity-x-monitor/raw/<timestamp> \
+  --detail /Users/wronsky/Documents/codes/serenity-x-monitor/parsed/<timestamp>.md
+```
+
+Outputs:
+
+- `reports/<timestamp>_report.md`
+- `reports/latest_summary.md`
+
+Important behavior:
+
+- Runs `codex exec` in read-only sandbox mode.
+- Reads raw rows, manifest, and deterministic parsed archive.
+- Writes only through this wrapper script after marker validation.
+- Its prompt explicitly forbids substring-based causal leaps such as
+  `Optimus -> MU`, `Unimicron -> Micron`, or Samsung MLCC news -> HBM thesis.
 
 ### `scripts/run_pipeline.py`
 
@@ -73,8 +98,11 @@ python3 /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/run_pipeline.p
 
 Important behavior:
 
-- Defaults to `--parser archive`, which calls `build_x_archive_report.py`.
-- `--parser codex` uses the Codex CLI parser.
+- Defaults to `--parser codex`, which calls `build_x_archive_report.py` for
+  full archive coverage and then `summarize_x_archive_with_codex.py` for Codex
+  CLI thesis synthesis.
+- `--parser archive` skips Codex CLI and uses the deterministic rule-based
+  report.
 - Does not send Feishu unless `--send` is passed.
 - `--send` requires `--chat-id` or `FEISHU_CHAT_ID`.
 
@@ -91,7 +119,7 @@ python3 -B /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/hermes_dail
 Important behavior:
 
 - Looks back 30 hours by default.
-- Calls `run_pipeline.py --parser archive`.
+- Calls `run_pipeline.py --parser codex`.
 - Generates `long_term_views/pending_updates/<date>.md`.
 - Commits only that pending update file if it changed. Pass
   `--no-git-commit` to disable this during manual dry runs.
@@ -127,8 +155,9 @@ The file is a commit-safe summary for later manual merge into
 Purpose: Use Codex CLI to produce an LLM-written detailed analysis and
 report-ready summary from a raw run.
 
-Use only when an LLM narrative summary is explicitly desired. For complete
-backfills, prefer `build_x_archive_report.py`.
+Legacy/specialist path. Daily runs prefer deterministic archive plus
+`summarize_x_archive_with_codex.py` so row coverage and thesis synthesis are
+separated.
 
 ### `scripts/send_feishu_text.py`
 

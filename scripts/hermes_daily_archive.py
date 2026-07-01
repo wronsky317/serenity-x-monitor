@@ -5,7 +5,7 @@ This script is intentionally deterministic:
 - fetches a recent UTC window from Supercycle/X,
 - archives raw JSON under raw/<timestamp>/,
 - writes complete parsed markdown under parsed/<timestamp>.md,
-- writes a Feishu-friendly report under reports/<timestamp>_report.md and
+- writes a Codex CLI synthesized report under reports/<timestamp>_report.md and
   reports/latest_summary.md,
 - writes a reviewable long-term-view candidate under
   long_term_views/pending_updates/<date>.md,
@@ -216,7 +216,7 @@ def main(argv: list[str] | None = None) -> int:
         sys.executable,
         str(SCRIPTS_DIR / "run_pipeline.py"),
         "--parser",
-        "archive",
+        "codex",
         "--handle",
         args.handle,
         "--since",

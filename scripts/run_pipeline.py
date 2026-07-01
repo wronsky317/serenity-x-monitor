@@ -3,7 +3,7 @@
 
 Pipeline:
 1. Fetch raw X/Supercycle data into raw/<timestamp>/.
-2. Parse/archive the raw run into parsed/<timestamp>.md.
+2. Archive the raw run into parsed/<timestamp>.md.
 3. Write the report-ready file into reports/<timestamp>_report.md and latest_summary.md.
 4. Optionally send latest_summary.md to Feishu.
 """
@@ -42,6 +42,20 @@ def parse_key_value_lines(stdout: str) -> dict[str, str]:
     return values
 
 
+def run_archive_builder(raw_run: str, handle: str) -> subprocess.CompletedProcess[str]:
+    return run(
+        [
+            sys.executable,
+            "-B",
+            str(SCRIPTS_DIR / "build_x_archive_report.py"),
+            "--raw-run",
+            raw_run,
+            "--handle",
+            handle,
+        ]
+    )
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fetch, parse, report, and optionally send Serenity update.")
     parser.add_argument(
@@ -66,10 +80,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--parser",
         choices=("archive", "codex"),
-        default="archive",
+        default="codex",
         help=(
-            "archive = deterministic full row archive via build_x_archive_report.py; "
-            "codex = LLM summary via parse_x_raw_with_codex.py."
+            "codex = deterministic full row archive plus Codex CLI opinion summary; "
+            "archive = deterministic full row archive and rule-based report."
         ),
     )
     parser.add_argument("--send", action="store_true", help="Send the generated report to Feishu.")
@@ -107,30 +121,32 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Could not determine raw run directory from fetch output:\n{fetched.stdout}", file=sys.stderr)
         return 1
 
-    if args.parser == "archive":
-        parse_command = [
-            sys.executable,
-            "-B",
-            str(SCRIPTS_DIR / "build_x_archive_report.py"),
-            "--raw-run",
-            raw_run,
-            "--handle",
-            args.handle,
-        ]
-    else:
-        parse_command = [
-            sys.executable,
-            str(SCRIPTS_DIR / "parse_x_raw_with_codex.py"),
-            "--raw-run",
-            raw_run,
-            "--handle",
-            args.handle,
-        ]
-    parsed = run(parse_command)
+    parsed = run_archive_builder(raw_run, args.handle)
     if parsed.returncode != 0:
         print(parsed.stdout, end="")
         print(parsed.stderr, end="", file=sys.stderr)
         return parsed.returncode
+    if args.parser == "codex":
+        archive_outputs = parse_key_value_lines(parsed.stdout)
+        detail_path = archive_outputs.get("detailed")
+        if not detail_path:
+            print(f"Could not determine detailed archive path from archive output:\n{parsed.stdout}", file=sys.stderr)
+            return 1
+        codex_command = [
+            sys.executable,
+            str(SCRIPTS_DIR / "summarize_x_archive_with_codex.py"),
+            "--raw-run",
+            raw_run,
+            "--detail",
+            detail_path,
+            "--handle",
+            args.handle,
+        ]
+        parsed = run(codex_command)
+        if parsed.returncode != 0:
+            print(parsed.stdout, end="")
+            print(parsed.stderr, end="", file=sys.stderr)
+            return parsed.returncode
     outputs = parse_key_value_lines(parsed.stdout)
     report_path = outputs.get("latest") or outputs.get("report")
     if not report_path:

@@ -60,6 +60,8 @@ def extract_coverage(intro: str) -> str:
     for line in intro.splitlines():
         if "覆盖 `" in line and "命中 Serenity" in line:
             return line.strip()
+        if "本次本地归档覆盖 `" in line:
+            return line.strip()
     return "未在报告中识别到覆盖窗口。"
 
 
@@ -93,6 +95,7 @@ def build_candidate(
 ) -> str:
     sections = section_map(report_markdown)
     intro = sections.get("__intro__", "")
+    coverage_source = intro + "\n" + sections.get("今日核心总结", "")
     durable_signal = has_durable_signal(report_markdown, sections)
     status = "需要人工复核后合并" if durable_signal else "暂无明确长期观点变更"
 
@@ -116,7 +119,7 @@ def build_candidate(
         f"- 来源报告：`{rel_path(report_path)}`",
         f"- raw_run_id：`{raw_id}`",
         f"- parsed_archive：`{detailed_id}`",
-        f"- 覆盖口径：{extract_coverage(intro)}",
+        f"- 覆盖口径：{extract_coverage(coverage_source)}",
         "",
         "## 建议合并动作",
         "",

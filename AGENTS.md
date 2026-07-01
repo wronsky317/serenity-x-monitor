@@ -15,8 +15,9 @@ You are running the Serenity X monitor.
    `python3 -B /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/hermes_daily_archive.py`
 2. That script is the source of truth. It fetches raw Supercycle/X data, writes
    `raw/<timestamp>/`, builds a complete row-by-row archive at
-   `parsed/<timestamp>.md`, writes `reports/<timestamp>_report.md`, updates
-   `reports/latest_summary.md`, writes a reviewable long-term-view candidate to
+   `parsed/<timestamp>.md`, asks Codex CLI to synthesize
+   `reports/<timestamp>_report.md`, updates `reports/latest_summary.md`, writes
+   a reviewable long-term-view candidate to
    `long_term_views/pending_updates/<date>.md`, commits only that pending file
    to git when it changed, pushes the current branch to `origin`, and prepends
    `state/memory.md`.
@@ -33,6 +34,8 @@ You are running the Serenity X monitor.
 ## Report Requirements
 
 - Title: `Serenity（@aleabitoreddit）X 日报`.
+- The report-level thesis synthesis should come from Codex CLI via
+  `scripts/summarize_x_archive_with_codex.py`, not from keyword templates.
 - Separate direct posts, replies, reposts, and secondary-source items.
 - For each item, capture timestamp, source URL, securities/themes, stance, and
   thesis/catalyst/risk.

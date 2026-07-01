@@ -50,26 +50,11 @@ Parameter meaning:
 - For a short window, use smaller values such as `--take 50 --max-pages 5`.
   For a wider backfill, increase `--max-pages` first.
 
-## 2. Parse Raw Data With Codex CLI
+## 2. Archive Raw Data, Then Summarize With Codex CLI
 
-```bash
-python3 /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/parse_x_raw_with_codex.py
-```
-
-By default this uses the latest `raw/<timestamp>/` directory.
-
-Outputs:
-
-- Detailed parsed archive:
-  `/Users/wronsky/Documents/codes/serenity-x-monitor/parsed/<timestamp>.md`
-- Report-ready summary:
-  `/Users/wronsky/Documents/codes/serenity-x-monitor/reports/<timestamp>_report.md`
-- Latest report copy:
-  `/Users/wronsky/Documents/codes/serenity-x-monitor/reports/latest_summary.md`
-
-For large backfills, use the deterministic full archive builder after fetching.
-It writes every matched Serenity row into the parsed Markdown file, so older rows
-will not be collapsed by the LLM:
+For backfills and daily runs, first use the deterministic full archive builder
+after fetching. It writes every matched Serenity row into the parsed Markdown
+file, so older rows will not be collapsed by an LLM:
 
 ```bash
 python3 -B /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/build_x_archive_report.py \
@@ -79,8 +64,25 @@ python3 -B /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/build_x_arc
 Outputs are the same paths:
 
 - `/Users/wronsky/Documents/codes/serenity-x-monitor/parsed/<timestamp>.md`
+
+Then use Codex CLI for report-level thesis synthesis:
+
+```bash
+python3 /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/summarize_x_archive_with_codex.py \
+  --raw-run /Users/wronsky/Documents/codes/serenity-x-monitor/raw/<timestamp> \
+  --detail /Users/wronsky/Documents/codes/serenity-x-monitor/parsed/<timestamp>.md
+```
+
+Report outputs:
+
 - `/Users/wronsky/Documents/codes/serenity-x-monitor/reports/<timestamp>_report.md`
 - `/Users/wronsky/Documents/codes/serenity-x-monitor/reports/latest_summary.md`
+
+Legacy one-step Codex parsing is still available, but daily runs do not use it:
+
+```bash
+python3 /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/parse_x_raw_with_codex.py
+```
 
 ## 3. Full Pipeline
 
@@ -90,9 +92,9 @@ Fetch -> parse -> report:
 python3 /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/run_pipeline.py
 ```
 
-By default `run_pipeline.py` now uses the deterministic archive parser:
-`scripts/build_x_archive_report.py`. Use `--parser codex` only when you
-explicitly want the Codex CLI LLM parser.
+By default `run_pipeline.py` uses deterministic archive coverage plus Codex CLI
+opinion synthesis. Use `--parser archive` only when you explicitly want the
+older deterministic rule-based report without Codex CLI.
 
 Fetch a range -> parse -> report:
 
@@ -125,6 +127,7 @@ Default behavior:
 - Look back 30 hours in UTC to avoid missing data if cron runs late.
 - Fetch raw pages into `raw/<timestamp>/`.
 - Build complete parsed archive with `build_x_archive_report.py`.
+- Generate the report with Codex CLI via `summarize_x_archive_with_codex.py`.
 - Write report files under `reports/`.
 - Write a reviewable candidate update under
   `long_term_views/pending_updates/<date>.md`.
