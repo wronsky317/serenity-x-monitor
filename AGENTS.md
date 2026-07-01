@@ -39,6 +39,13 @@ You are running the Serenity X monitor.
 - Separate direct posts, replies, reposts, and secondary-source items.
 - For each item, capture timestamp, source URL, securities/themes, stance, and
   thesis/catalyst/risk.
+- Explain raw row status labels when they appear: `thesis` means upstream
+  structured portfolio/thesis generation succeeded, not that the conclusion is
+  automatically correct; `failed` usually means upstream portfolio/thesis
+  generation failed while text may still be captured; `skipped` means no
+  directional portfolio was generated. Do not present any status label as the
+  report's confidence level or as source collection failure unless the reason
+  says so.
 - Include a short section for missed-risk checks: Chinese names, A-shares,
   global tickers, aliases, and reposts.
 - If no new posts are found, send a short no-new-post report.

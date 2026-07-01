@@ -78,6 +78,16 @@ Report outputs:
 - `/Users/wronsky/Documents/codes/serenity-x-monitor/reports/<timestamp>_report.md`
 - `/Users/wronsky/Documents/codes/serenity-x-monitor/reports/latest_summary.md`
 
+Status labels in raw rows:
+
+- `thesis`: upstream successfully generated a structured portfolio/thesis. This
+  is not a confidence label and does not mean it should be merged automatically.
+- `failed`: usually means upstream portfolio/thesis generation failed, for
+  example image download timeout or invalid ticker. The post text may still be
+  captured and usable.
+- `skipped`: upstream did not generate a directional portfolio. The text can
+  still contain useful market color or watchlist evidence.
+
 Legacy one-step Codex parsing is still available, but daily runs do not use it:
 
 ```bash

@@ -58,8 +58,12 @@ def build_prompt(raw_run: Path, detail_path: Path, handle: str) -> str:
    - `Unimicron` 不是 Micron。
    - Samsung 签 MLCC LTA 不等于 Samsung HBM thesis。
    - 机器人/汽车零部件/执行器内容不要归纳成 Memory/HBM，除非原文明确提到 HBM/DRAM/NAND 供需与相关公司。
-4. 对 failed/skipped 行也要阅读；它们可能包含有效观点，但必须标明不确定性或抓取/portfolio 失败状态。
-5. 对每条重点内容给出：时间、来源链接、涉及证券/公司、Serenity 的观点、可验证催化、风险或待验证事项。
+4. 对 failed/skipped 行也要阅读；它们可能包含有效观点。
+   - `thesis` 表示上游成功生成了结构化 portfolio/thesis，不等于“观点一定正确”或“可直接合并长期观点”；仍需核对原文因果、ticker 和风险。
+   - `failed` 不是推文抓取失败，通常表示上游 portfolio/thesis 结构化生成失败、图片下载失败或 ticker 校验失败；如果原文已在 archive 中出现，应写作“原始状态：failed（结构化生成失败，文本已抓取）”，并列出 failureReason。
+   - `skipped` 不是推文无效，通常表示上游没有生成方向性组合；如果文本有主题观察，应写作“原始状态：skipped（未生成方向性组合）”，并列出 skipReason。
+   - 不要只写“状态：thesis/failed/skipped”，必须解释这些是原始 row 状态，不是报告结论等级。
+5. 对每条重点内容给出：时间、来源链接、原始状态说明、涉及证券/公司、Serenity 的观点、可验证催化、风险或待验证事项。
 6. 长期观点部分只写“新增/强化/削弱/待观察”的 thesis，不要把一次性市场评论升级成长期主线。
 7. 不给投资买卖建议，不使用 Markdown 表格，不输出 raw JSON，不贴长篇原文。
 

@@ -81,6 +81,11 @@ Important behavior:
 - Writes only through this wrapper script after marker validation.
 - Its prompt explicitly forbids substring-based causal leaps such as
   `Optimus -> MU`, `Unimicron -> Micron`, or Samsung MLCC news -> HBM thesis.
+- Its prompt requires status explanations: `thesis` means upstream structured
+  portfolio/thesis generation succeeded; `failed` means upstream structured
+  generation failed unless otherwise stated; `skipped` means no directional
+  portfolio was generated. These labels are raw row states, not confidence
+  levels. All three still require source-text review.
 
 ### `scripts/run_pipeline.py`
 

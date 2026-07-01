@@ -42,6 +42,18 @@ noise
         self.assertIn("Unimicron", prompt)
         self.assertIn("Samsung 签 MLCC LTA 不等于 Samsung HBM thesis", prompt)
 
+    def test_prompt_explains_raw_status_labels(self) -> None:
+        prompt = summary.build_prompt(
+            Path("/tmp/raw/20260701T000000Z"),
+            Path("/tmp/parsed/20260701T000000Z.md"),
+            "aleabitoreddit",
+        )
+
+        self.assertIn("`thesis` 表示上游成功生成了结构化 portfolio/thesis", prompt)
+        self.assertIn("`failed` 不是推文抓取失败", prompt)
+        self.assertIn("`skipped` 不是推文无效", prompt)
+        self.assertIn("原始 row 状态，不是报告结论等级", prompt)
+
 
 if __name__ == "__main__":
     unittest.main()
