@@ -34,6 +34,7 @@ PROJECT_ROOT = Path("/Users/wronsky/Documents/codes/serenity-x-monitor")
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 STATE_FILE = PROJECT_ROOT / "state" / "memory.md"
 LATEST_REPORT = PROJECT_ROOT / "reports" / "latest_summary.md"
+DEFAULT_FETCH_RETRY_SCHEDULE = "20:3,60:3,120:3"
 
 
 def now_cst() -> datetime:
@@ -73,8 +74,37 @@ def read_manifest(raw_run: str) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def report_path_for_run(outputs: dict[str, str], raw_run: str) -> str:
+    """Return the report path only when it clearly belongs to this raw run."""
+    if not raw_run:
+        return ""
+    run_id = Path(raw_run).name
+    report_path = outputs.get("report", "").strip()
+    latest_path = outputs.get("latest", "").strip()
+    if not report_path or not latest_path:
+        return ""
+    if Path(report_path).name != f"{run_id}_report.md":
+        return ""
+    if Path(latest_path).name != "latest_summary.md":
+        return ""
+    return report_path
+
+
 def generate_pending_update(outputs: dict[str, str], raw_run: str) -> dict[str, str]:
-    report_path = outputs.get("latest") or outputs.get("report") or str(LATEST_REPORT)
+    report_path = report_path_for_run(outputs, raw_run)
+    if not report_path:
+        return {
+            "pending_update_status": "failed missing-current-report",
+            "pending_update_error": (
+                "Pipeline did not return a report path matching the current raw run; "
+                "refusing to use reports/latest_summary.md fallback."
+            ),
+        }
+    if not Path(report_path).exists():
+        return {
+            "pending_update_status": "failed missing-report-file",
+            "pending_update_error": f"Current run report file not found: {report_path}",
+        }
     command = [
         sys.executable,
         "-B",
@@ -202,6 +232,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Commit the pending long-term update locally but do not push it.",
     )
+    parser.add_argument(
+        "--fetch-retry-schedule",
+        default=DEFAULT_FETCH_RETRY_SCHEDULE,
+        help=(
+            "Fetch retry schedule as '<seconds>:<retries>' levels. "
+            "Default: 20:3,60:3,120:3."
+        ),
+    )
     return parser.parse_args(argv)
 
 
@@ -227,6 +265,8 @@ def main(argv: list[str] | None = None) -> int:
         str(args.take),
         "--max-pages",
         str(args.max_pages),
+        "--fetch-retry-schedule",
+        args.fetch_retry_schedule,
     ]
     completed = run(command)
     if completed.returncode != 0:
@@ -245,6 +285,21 @@ def main(argv: list[str] | None = None) -> int:
     values = parse_key_values(completed.stdout)
     raw_run = values.get("raw", "")
     manifest = read_manifest(raw_run) if raw_run else {}
+    current_report = report_path_for_run(values, raw_run)
+    if not current_report:
+        append_memory(
+            since=since,
+            until=until,
+            raw_run=raw_run,
+            outputs=values,
+            manifest=manifest,
+            status="failed missing-current-report",
+        )
+        print(
+            "Pipeline completed without a current-run report path; refusing to use old latest_summary.md.",
+            file=sys.stderr,
+        )
+        return 1
     pending_update = generate_pending_update(values, raw_run)
     git_status = "skipped (--no-git-commit)"
     git_push_status = "skipped (no commit)"
@@ -271,8 +326,9 @@ def main(argv: list[str] | None = None) -> int:
     if pending_update.get("pending_update_status") != "ok":
         print(pending_update.get("pending_update_error", ""), file=sys.stderr)
 
-    if LATEST_REPORT.exists():
-        print(LATEST_REPORT.read_text(encoding="utf-8", errors="replace"), end="")
+    report_to_print = Path(values.get("latest", "")).expanduser()
+    if report_to_print.exists() and report_path_for_run(values, raw_run):
+        print(report_to_print.read_text(encoding="utf-8", errors="replace"), end="")
     else:
         print(completed.stdout, end="")
     return 0

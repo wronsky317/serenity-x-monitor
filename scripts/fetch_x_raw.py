@@ -90,9 +90,18 @@ def fallback_cursor_from_rows(rows: list[dict[str, Any]]) -> str | None:
 
 
 def fetch_json(url: str, timeout: int) -> tuple[dict[str, Any], bytes]:
-    transient_errors = (urllib.error.URLError, TimeoutError, http.client.IncompleteRead)
+    # Treat HTTP 4xx/5xx (Cloudflare challenges, rate limits, transient server
+    # errors) as retryable. The supercycle.fi CDN frequently returns 403/404/503
+    # for a few seconds when challenged, then serves normally — a single failed
+    # request should not abort the run.
+    transient_errors = (
+        urllib.error.URLError,
+        urllib.error.HTTPError,
+        TimeoutError,
+        http.client.IncompleteRead,
+    )
     last_error: BaseException | None = None
-    for attempt in range(1, 4):
+    for attempt in range(1, 5):
         request = urllib.request.Request(
             url,
             headers={
@@ -113,7 +122,18 @@ def fetch_json(url: str, timeout: int) -> tuple[dict[str, Any], bytes]:
             return data, raw
         except transient_errors as exc:
             last_error = exc
-            if attempt == 3:
+            status = getattr(exc, "code", None)
+            # 4xx other than 408 (Request Timeout) / 429 (Too Many Requests) is
+            # almost always a permanent client error — no point hammering it.
+            if (
+                isinstance(exc, urllib.error.HTTPError)
+                and status is not None
+                and 400 <= status < 500
+                and status not in (408, 425, 429)
+                and attempt >= 2
+            ):
+                break
+            if attempt == 4:
                 break
             time.sleep(1.5 * attempt)
     assert last_error is not None
