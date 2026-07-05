@@ -16,7 +16,9 @@ You are running the Serenity X monitor.
 2. That script is the source of truth. It fetches raw Supercycle/X data, writes
    `raw/<timestamp>/`, builds a complete row-by-row archive at
    `parsed/<timestamp>.md`, asks Codex CLI to synthesize
-   `reports/<timestamp>_report.md`, updates `reports/latest_summary.md`, writes
+   `reports/<timestamp>_report.md`, asks Codex CLI to write an about-800 字
+   Xiaohongshu note with recommended short titles, appends that note to
+   `reports/latest_summary.md`, writes
    a reviewable long-term-view candidate to
    `long_term_views/pending_updates/<date>.md`, commits only that pending file
    to git when it changed, pushes the current branch to `origin`, and prepends
@@ -36,6 +38,11 @@ You are running the Serenity X monitor.
 - Title: `Serenity（@aleabitoreddit）X 日报`.
 - The report-level thesis synthesis should come from Codex CLI via
   `scripts/summarize_x_archive_with_codex.py`, not from keyword templates.
+- The Xiaohongshu note should come from Codex CLI via
+  `scripts/generate_xhs_note_with_codex.py`, not from keyword templates. It
+  must be generated from the current-run report and appended to the Feishu
+  message; if generation fails, include the failure note and do not reuse any
+  old Xiaohongshu draft.
 - Separate direct posts, replies, reposts, and secondary-source items.
 - For each item, capture timestamp, source URL, securities/themes, stance, and
   thesis/catalyst/risk.

@@ -87,6 +87,32 @@ Important behavior:
   portfolio was generated. These labels are raw row states, not confidence
   levels. All three still require source-text review.
 
+### `scripts/generate_xhs_note_with_codex.py`
+
+Purpose: Ask Codex CLI to rewrite the current-run Serenity report into an
+about-800 字 Xiaohongshu note with recommended short titles and topic tags.
+
+Typical use:
+
+```bash
+python3 /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/generate_xhs_note_with_codex.py \
+  --report /Users/wronsky/Documents/codes/serenity-x-monitor/reports/<timestamp>_report.md \
+  --append-to /Users/wronsky/Documents/codes/serenity-x-monitor/reports/latest_summary.md
+```
+
+Outputs:
+
+- `reports/<timestamp>_xhs.md`
+- Appended Xiaohongshu section in `reports/latest_summary.md` when `--append-to`
+  is provided.
+
+Important behavior:
+
+- Runs `codex exec` in read-only sandbox mode.
+- Reads only the current-run report and writes only after marker validation.
+- Does not read old Xiaohongshu drafts, so failures cannot silently reuse stale
+  note content.
+
 ### `scripts/run_pipeline.py`
 
 Purpose: Orchestrate fetch -> archive/parse -> report -> optional Feishu send.
@@ -106,6 +132,9 @@ Important behavior:
 - Defaults to `--parser codex`, which calls `build_x_archive_report.py` for
   full archive coverage and then `summarize_x_archive_with_codex.py` for Codex
   CLI thesis synthesis.
+- Calls `generate_xhs_note_with_codex.py` by default to append an about-800 字
+  Xiaohongshu note and recommended short titles to `reports/latest_summary.md`.
+  Pass `--skip-xhs-note` only for local debugging.
 - `--parser archive` skips Codex CLI and uses the deterministic rule-based
   report.
 - Does not send Feishu unless `--send` is passed.
@@ -125,6 +154,8 @@ Important behavior:
 
 - Looks back 30 hours by default.
 - Calls `run_pipeline.py --parser codex`.
+- Prints a Feishu-ready `reports/latest_summary.md` that already includes the
+  Codex CLI Xiaohongshu note.
 - Generates `long_term_views/pending_updates/<date>.md`.
 - Commits only that pending update file if it changed. Pass
   `--no-git-commit` to disable this during manual dry runs.

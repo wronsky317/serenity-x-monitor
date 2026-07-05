@@ -5,7 +5,8 @@ Pipeline:
 1. Fetch raw X/Supercycle data into raw/<timestamp>/.
 2. Archive the raw run into parsed/<timestamp>.md.
 3. Write the report-ready file into reports/<timestamp>_report.md and latest_summary.md.
-4. Optionally send latest_summary.md to Feishu.
+4. Ask Codex CLI to write an 800 字 Xiaohongshu note and append it to latest_summary.md.
+5. Optionally send latest_summary.md to Feishu.
 """
 
 from __future__ import annotations
@@ -60,6 +61,34 @@ def write_failure_notice(stage: str, details: str) -> Path:
         encoding="utf-8",
     )
     return latest_path
+
+
+def append_xhs_failure_notice(report_path: str, details: str) -> None:
+    if not report_path:
+        return
+    path = Path(report_path)
+    if not path.exists():
+        return
+    report = path.read_text(encoding="utf-8", errors="replace").rstrip()
+    path.write_text(
+        "\n".join(
+            [
+                report,
+                "",
+                "---",
+                "",
+                "# 小红书笔记",
+                "",
+                "本次小红书笔记生成失败，已拒绝复用旧稿。",
+                "",
+                "## 错误摘要",
+                "",
+                details.strip()[-2000:] or "未捕获到详细错误输出。",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
 
 def run_fetch_with_retries(
@@ -178,6 +207,17 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--chat-id", default=DEFAULT_CHAT_ID)
     parser.add_argument("--title", default="Serenity 日报")
     parser.add_argument(
+        "--skip-xhs-note",
+        action="store_true",
+        help="Skip Codex CLI Xiaohongshu note generation and Feishu attachment.",
+    )
+    parser.add_argument(
+        "--xhs-target-words",
+        type=int,
+        default=800,
+        help="Target length for the Codex CLI Xiaohongshu note. Default: 800.",
+    )
+    parser.add_argument(
         "--fetch-retry-schedule",
         default=DEFAULT_FETCH_RETRY_SCHEDULE,
         help=(
@@ -258,6 +298,28 @@ def main(argv: list[str] | None = None) -> int:
         write_failure_notice("report-output", parsed.stdout)
         return 1
 
+    if not args.skip_xhs_note:
+        current_report = outputs.get("report") or report_path
+        xhs_command = [
+            sys.executable,
+            str(SCRIPTS_DIR / "generate_xhs_note_with_codex.py"),
+            "--report",
+            current_report,
+            "--handle",
+            args.handle,
+            "--target-words",
+            str(args.xhs_target_words),
+            "--append-to",
+            report_path,
+        ]
+        xhs = run(xhs_command)
+        print(xhs.stderr, end="", file=sys.stderr)
+        if xhs.returncode == 0:
+            outputs.update(parse_key_value_lines(xhs.stdout))
+        else:
+            append_xhs_failure_notice(report_path, xhs.stderr or xhs.stdout)
+            outputs["xhs"] = "failed"
+
     if args.send:
         if not args.chat_id:
             print("Missing --chat-id or FEISHU_CHAT_ID for --send.", file=sys.stderr)
@@ -280,6 +342,8 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"raw={raw_run}")
     print(parsed.stdout, end="")
+    if "xhs" in outputs:
+        print(f"xhs={outputs['xhs']}")
     if args.send:
         print(f"sent={report_path}")
     else:

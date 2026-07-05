@@ -78,6 +78,19 @@ Report outputs:
 - `/Users/wronsky/Documents/codes/serenity-x-monitor/reports/<timestamp>_report.md`
 - `/Users/wronsky/Documents/codes/serenity-x-monitor/reports/latest_summary.md`
 
+Then generate the Xiaohongshu attachment with Codex CLI:
+
+```bash
+python3 /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/generate_xhs_note_with_codex.py \
+  --report /Users/wronsky/Documents/codes/serenity-x-monitor/reports/<timestamp>_report.md \
+  --append-to /Users/wronsky/Documents/codes/serenity-x-monitor/reports/latest_summary.md
+```
+
+Xiaohongshu output:
+
+- `/Users/wronsky/Documents/codes/serenity-x-monitor/reports/<timestamp>_xhs.md`
+- Appended `# 小红书笔记` section in `reports/latest_summary.md` for Feishu.
+
 Status labels in raw rows:
 
 - `thesis`: upstream successfully generated a structured portfolio/thesis. This
@@ -103,8 +116,11 @@ python3 /Users/wronsky/Documents/codes/serenity-x-monitor/scripts/run_pipeline.p
 ```
 
 By default `run_pipeline.py` uses deterministic archive coverage plus Codex CLI
-opinion synthesis. Use `--parser archive` only when you explicitly want the
-older deterministic rule-based report without Codex CLI.
+opinion synthesis, then calls Codex CLI again to generate an about-800 字
+Xiaohongshu note with recommended short titles and append it to
+`reports/latest_summary.md`. Use `--parser archive` only when you explicitly
+want the older deterministic rule-based report without Codex CLI. Use
+`--skip-xhs-note` only for local debugging.
 
 Fetch a range -> parse -> report:
 
@@ -138,6 +154,8 @@ Default behavior:
 - Fetch raw pages into `raw/<timestamp>/`.
 - Build complete parsed archive with `build_x_archive_report.py`.
 - Generate the report with Codex CLI via `summarize_x_archive_with_codex.py`.
+- Generate and append the Xiaohongshu note with Codex CLI via
+  `generate_xhs_note_with_codex.py`.
 - Write report files under `reports/`.
 - Write a reviewable candidate update under
   `long_term_views/pending_updates/<date>.md`.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -60,6 +61,17 @@ class RunPipelineTest(unittest.TestCase):
             pipeline.parse_retry_schedule("20:3,60:3,120:3"),
             [(20.0, 3), (60.0, 3), (120.0, 3)],
         )
+
+    def test_append_xhs_failure_notice_does_not_reuse_old_note(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            report = Path(tmp) / "latest_summary.md"
+            report.write_text("# Serenity 日报\n\n日报正文\n", encoding="utf-8")
+
+            pipeline.append_xhs_failure_notice(str(report), "codex unavailable")
+
+            text = report.read_text(encoding="utf-8")
+            self.assertIn("本次小红书笔记生成失败，已拒绝复用旧稿。", text)
+            self.assertIn("codex unavailable", text)
 
 
 if __name__ == "__main__":

@@ -90,6 +90,9 @@ Hermes investment suite automation:
 - Writes report to `reports/latest_summary.md`.
 - Uses deterministic parsing for complete row coverage, then Codex CLI for
   report-level thesis synthesis.
+- Uses Codex CLI again to generate an about-800 字 Xiaohongshu note with
+  recommended short titles, stores it under `reports/<timestamp>_xhs.md`, and
+  appends it to `reports/latest_summary.md` for Feishu delivery.
 - Writes, commits, and pushes candidate updates under
   `long_term_views/pending_updates/`.
 - Updates memory at `state/memory.md`.
