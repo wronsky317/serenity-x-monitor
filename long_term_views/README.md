@@ -28,3 +28,7 @@ It is separate from runtime artifacts:
   and long-term logic factors derived from the 2026 backfill.
 - `maintenance_rules.md`: rules for when and how future agents should update
   the long-term thesis layer.
+- `pending_updates/`: unreviewed daily candidate updates waiting for manual
+  merge.
+- `merged/`: reviewed pending updates that have already been merged into the
+  maintained core asset map.
