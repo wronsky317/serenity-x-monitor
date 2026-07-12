@@ -8,11 +8,18 @@ old Xiaohongshu drafts, so a failed run cannot silently reuse stale content.
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from codex_cli import resolve_codex_cli
 
 
 PROJECT_ROOT = Path("/Users/wronsky/Documents/codes/serenity-x-monitor")
@@ -21,6 +28,11 @@ DEFAULT_HANDLE = "aleabitoreddit"
 
 XHS_MARKER = "<<<SERENITY_XHS_MD>>>"
 END_MARKER = "<<<END>>>"
+INTERNAL_STATUS_PATTERN = re.compile(r"\b(?:thesis|skipped|failed)\b", re.IGNORECASE)
+MARKETING_CTA_PATTERN = re.compile(r"(?:企业微信|购买页面|添加微信|欢迎咨询|合作联系|开户链接)")
+RISK_NOTICE = "风险提示：以上内容仅供参考，不构成投资建议。"
+MAX_SHORT_TITLE_LENGTH = 11
+MAX_BODY_LENGTH = 1000
 
 
 def run_id_from_report(report_path: Path) -> str:
@@ -43,15 +55,16 @@ def build_prompt(report_path: Path, handle: str, target_words: int) -> str:
 
 硬性要求：
 1. 只基于输入报告，不联网，不补充外部事实，不编造链接、时间、证券代码或原帖内容。
-2. 输出中文，正文控制在 {max(500, target_words - 50)}-{target_words + 100} 字，标题候选和话题标签不计入；超过上限必须删减，不要灌水。
+2. 输出中文，正文控制在 {max(500, target_words - 50)}-{min(MAX_BODY_LENGTH, target_words + 100)} 字，标题候选和话题标签不计入；正文绝对不得超过 {MAX_BODY_LENGTH} 个字符，超过上限必须重写删减，不要灌水。
 3. 必须调用小红书笔记写法：短句、分段、适量 emoji、钩子开头、重点清晰、可读性强。
-4. 必须拟 5 个短标题，标题不超过 20 个中文字符，并标出“推荐”。
+4. 必须拟 5 个语义完整的短标题，每个标题不得超过 {MAX_SHORT_TITLE_LENGTH} 个字符，并标出“推荐”。发布时会自动加 `【财经】MMDD ` 前缀，禁止依赖截断凑长度。
 5. 正文要保留 Serenity 报告里的不确定性、可验证催化和风险，不得写成荐股或确定性投资建议。
 6. 如果报告明确说某主题今天没有有效主线，必须在正文中写清楚，避免误归因。
-7. 不使用 Markdown 表格，不输出写作过程，不输出图片提示词。
-8. 正文末尾必须包含这一条风险提示，文字保持一致：
-   **风险提示**:投资有风险,入市需谨慎。以上内容仅供参考,不构成投资建议或收益承诺。关于相关权益,请以购买页面所展示的信息为准。如需了解更多详细规则,欢迎添加企业微信进行咨询。
-9. 最后给 8-12 个小红书话题标签。
+7. 不要在标题、正文或话题中出现 `thesis`、`skipped`、`failed` 等内部处理状态，也不要解释这些状态的含义；只保留对应内容本身的观点、证据、催化、不确定性和风险。
+8. 不使用 Markdown 表格，不输出写作过程，不输出图片提示词。
+9. 正文最后只能使用这一条风险提示，文字保持一致，不要追加购买页面、企业微信、咨询、合作、开户链接等营销或导流信息：
+   {RISK_NOTICE}
+10. 最后给 8-12 个小红书话题标签。
 
 输出结构必须是：
 
@@ -80,7 +93,7 @@ def build_prompt(report_path: Path, handle: str, target_words: int) -> str:
 
 def run_codex(prompt: str, output_file: Path) -> None:
     command = [
-        "codex",
+        str(resolve_codex_cli()),
         "exec",
         "--cd",
         str(PROJECT_ROOT),
@@ -115,7 +128,27 @@ def extract_xhs_note(text: str) -> str:
     after = text.split(XHS_MARKER, 1)[1]
     if END_MARKER not in after:
         raise ValueError(f"Missing marker after {XHS_MARKER}: {END_MARKER}")
-    return after.split(END_MARKER, 1)[0].strip() + "\n"
+    note = after.split(END_MARKER, 1)[0].strip() + "\n"
+    if INTERNAL_STATUS_PATTERN.search(note):
+        raise ValueError("Xiaohongshu note contains forbidden internal processing status labels.")
+    if MARKETING_CTA_PATTERN.search(note):
+        raise ValueError("Xiaohongshu note contains forbidden marketing or contact CTA text.")
+    if RISK_NOTICE not in note:
+        raise ValueError("Xiaohongshu note is missing the required investment-advice disclaimer.")
+    title_block = re.search(r"^##\s+短标题候选\s*$\n(.*?)(?=^##\s+|\Z)", note, re.MULTILINE | re.DOTALL)
+    titles = re.findall(r"^\s*\d+[.)、]\s*(.+?)\s*$", title_block.group(1), re.MULTILINE) if title_block else []
+    cleaned_titles = [re.sub(r"[（(]\s*推荐\s*[）)]", "", title).strip() for title in titles]
+    if len(cleaned_titles) != 5:
+        raise ValueError("Xiaohongshu note must contain exactly 5 short title candidates.")
+    if any(len(title) > MAX_SHORT_TITLE_LENGTH for title in cleaned_titles):
+        raise ValueError(f"Xiaohongshu title candidate exceeds {MAX_SHORT_TITLE_LENGTH} characters.")
+    body_match = re.search(r"^##\s+正文\s*$\n(.*?)(?=^##\s+|\Z)", note, re.MULTILINE | re.DOTALL)
+    body = body_match.group(1).strip() if body_match else ""
+    if not body:
+        raise ValueError("Xiaohongshu note is missing the body section.")
+    if len(body) > MAX_BODY_LENGTH:
+        raise ValueError(f"Xiaohongshu body exceeds {MAX_BODY_LENGTH} characters.")
+    return note
 
 
 def write_xhs_note(note: str, output_path: Path) -> Path:
