@@ -90,6 +90,16 @@ def report_path_for_run(outputs: dict[str, str], raw_run: str) -> str:
     return report_path
 
 
+def xhs_path_for_run(outputs: dict[str, str], raw_run: str) -> str:
+    """Return the Xiaohongshu path only when it clearly belongs to this raw run."""
+    if not raw_run:
+        return ""
+    xhs_path = outputs.get("xhs", "").strip()
+    if Path(xhs_path).name != f"{Path(raw_run).name}_xhs.md":
+        return ""
+    return xhs_path
+
+
 def generate_pending_update(outputs: dict[str, str], raw_run: str) -> dict[str, str]:
     report_path = report_path_for_run(outputs, raw_run)
     if not report_path:
@@ -240,6 +250,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
             "Default: 20:3,60:3,120:3."
         ),
     )
+    parser.add_argument(
+        "--skip-xhs-note",
+        action="store_true",
+        help="Generate the current-run main report without waiting for the Xiaohongshu note.",
+    )
     return parser.parse_args(argv)
 
 
@@ -268,6 +283,8 @@ def main(argv: list[str] | None = None) -> int:
         "--fetch-retry-schedule",
         args.fetch_retry_schedule,
     ]
+    if args.skip_xhs_note:
+        command.append("--skip-xhs-note")
     completed = run(command)
     if completed.returncode != 0:
         print(completed.stdout, end="")
@@ -331,6 +348,9 @@ def main(argv: list[str] | None = None) -> int:
         print(report_to_print.read_text(encoding="utf-8", errors="replace"), end="")
     else:
         print(completed.stdout, end="")
+    print(f"\nsuite_raw={raw_run}")
+    print(f"suite_report={current_report}")
+    print(f"suite_xhs={xhs_path_for_run(values, raw_run)}")
     return 0
 
 

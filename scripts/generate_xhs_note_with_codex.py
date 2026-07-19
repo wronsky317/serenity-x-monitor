@@ -30,9 +30,11 @@ XHS_MARKER = "<<<SERENITY_XHS_MD>>>"
 END_MARKER = "<<<END>>>"
 INTERNAL_STATUS_PATTERN = re.compile(r"\b(?:thesis|skipped|failed)\b", re.IGNORECASE)
 MARKETING_CTA_PATTERN = re.compile(r"(?:企业微信|购买页面|添加微信|欢迎咨询|合作联系|开户链接)")
-RISK_NOTICE = "风险提示：以上内容仅供参考，不构成投资建议。"
+RISK_NOTICE = "本文由AI辅助生成，基于公开数据整理，不构成投资建议"
 MAX_SHORT_TITLE_LENGTH = 11
 MAX_BODY_LENGTH = 1000
+MAX_TAGS = 10
+FIXED_TAGS = ("白毛女神", "长期主义")
 
 
 def run_id_from_report(report_path: Path) -> str:
@@ -64,7 +66,7 @@ def build_prompt(report_path: Path, handle: str, target_words: int) -> str:
 8. 不使用 Markdown 表格，不输出写作过程，不输出图片提示词。
 9. 正文最后只能使用这一条风险提示，文字保持一致，不要追加购买页面、企业微信、咨询、合作、开户链接等营销或导流信息：
    {RISK_NOTICE}
-10. 最后给 8-12 个小红书话题标签。
+10. 最后严格给 {MAX_TAGS} 个小红书话题标签；最后两个必须依次为 `#白毛女神 #长期主义`，前八个不得与这两个重复。
 
 输出结构必须是：
 
@@ -148,7 +150,28 @@ def extract_xhs_note(text: str) -> str:
         raise ValueError("Xiaohongshu note is missing the body section.")
     if len(body) > MAX_BODY_LENGTH:
         raise ValueError(f"Xiaohongshu body exceeds {MAX_BODY_LENGTH} characters.")
-    return note
+    if not body.endswith(RISK_NOTICE) or body.count("不构成投资建议") != 1:
+        raise ValueError("Xiaohongshu body must end with the exact required AI disclaimer.")
+    return normalize_topic_section(note)
+
+
+def normalize_topic_section(note: str) -> str:
+    topic_match = re.search(r"^##\s+话题\s*$\n(.*?)(?=^##\s+|\Z)", note, re.MULTILINE | re.DOTALL)
+    if not topic_match:
+        raise ValueError("Xiaohongshu note is missing the topic section.")
+    source = re.findall(r"#([^#\s]+)", topic_match.group(1))
+    topics: list[str] = []
+    for topic in source:
+        if topic in FIXED_TAGS or topic in topics:
+            continue
+        topics.append(topic)
+        if len(topics) == MAX_TAGS - len(FIXED_TAGS):
+            break
+    if len(topics) < MAX_TAGS - len(FIXED_TAGS):
+        raise ValueError("Xiaohongshu note does not contain enough distinct topic tags.")
+    normalized = topics + list(FIXED_TAGS)
+    replacement = " ".join(f"#{topic}" for topic in normalized) + "\n"
+    return note[: topic_match.start(1)] + "\n" + replacement + note[topic_match.end(1) :].lstrip("\n")
 
 
 def write_xhs_note(note: str, output_path: Path) -> Path:

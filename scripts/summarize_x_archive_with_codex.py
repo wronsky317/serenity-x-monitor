@@ -17,6 +17,12 @@ import sys
 import tempfile
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from codex_cli import resolve_codex_cli
+
 
 PROJECT_ROOT = Path("/Users/wronsky/Documents/codes/serenity-x-monitor")
 RAW_DIR = PROJECT_ROOT / "raw"
@@ -94,7 +100,7 @@ def build_prompt(raw_run: Path, detail_path: Path, handle: str) -> str:
 
 def run_codex(prompt: str, output_file: Path) -> None:
     command = [
-        "codex",
+        str(resolve_codex_cli()),
         "exec",
         "--cd",
         str(PROJECT_ROOT),
