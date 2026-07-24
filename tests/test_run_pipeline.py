@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "run_pipeline.py"
@@ -15,6 +16,22 @@ SPEC.loader.exec_module(pipeline)
 
 
 class RunPipelineTest(unittest.TestCase):
+    def test_write_failure_notice_exposes_exact_reason_to_digest(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(
+            pipeline, "PROJECT_ROOT", Path(tmp)
+        ):
+            path = pipeline.write_failure_notice(
+                "fetch",
+                "Fetch failed:\nStale Supercycle feed is 24.5h behind",
+            )
+
+            text = path.read_text(encoding="utf-8")
+
+        self.assertIn(
+            "- 失败原因：Fetch failed: Stale Supercycle feed is 24.5h behind",
+            text,
+        )
+
     def test_run_fetch_with_retries_eventually_succeeds(self) -> None:
         calls: list[list[str]] = []
         results = [
@@ -55,6 +72,34 @@ class RunPipelineTest(unittest.TestCase):
         self.assertEqual(completed.returncode, 1)
         self.assertEqual(calls, 10)
         self.assertEqual(sleeps, [20, 20, 20, 60, 60, 60, 120, 120, 120])
+
+    def test_run_fetch_with_retries_does_not_retry_stale_feed(self) -> None:
+        calls = 0
+        sleeps: list[float] = []
+
+        def runner(command: list[str]) -> subprocess.CompletedProcess[str]:
+            nonlocal calls
+            calls += 1
+            return subprocess.CompletedProcess(
+                command,
+                1,
+                stdout="",
+                stderr=(
+                    "Fetch failed: Stale Supercycle feed from https://supercycle.fi/api/feed: "
+                    "newest row is 24.0h behind"
+                ),
+            )
+
+        completed = pipeline.run_fetch_with_retries(
+            ["fetch"],
+            retry_schedule=[(20, 3), (60, 3), (120, 3)],
+            runner=runner,
+            sleeper=sleeps.append,
+        )
+
+        self.assertEqual(completed.returncode, 1)
+        self.assertEqual(calls, 1)
+        self.assertEqual(sleeps, [])
 
     def test_parse_retry_schedule(self) -> None:
         self.assertEqual(

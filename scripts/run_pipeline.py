@@ -25,6 +25,7 @@ PROJECT_ROOT = Path("/Users/wronsky/Documents/codes/serenity-x-monitor")
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 DEFAULT_CHAT_ID = os.environ.get("FEISHU_CHAT_ID", "")
 DEFAULT_FETCH_RETRY_SCHEDULE = "20:3,60:3,120:3"
+STALE_FEED_MARKER = "Stale Supercycle feed"
 
 
 def run(command: list[str]) -> subprocess.CompletedProcess[str]:
@@ -42,6 +43,7 @@ def write_failure_notice(stage: str, details: str) -> Path:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
     latest_path = REPORTS_DIR / "latest_summary.md"
+    compact_details = " ".join(details.strip().split())[-4000:] or "未捕获到详细错误输出。"
     latest_path.write_text(
         "\n".join(
             [
@@ -49,18 +51,19 @@ def write_failure_notice(stage: str, details: str) -> Path:
                 "",
                 f"- 时间：{timestamp}",
                 f"- 阶段：{stage}",
+                f"- 失败原因：{compact_details}",
                 "- 状态：本次抓取/解析未成功生成新报告。",
                 "- 处理：为避免误用旧报告，`latest_summary.md` 已写入失败占位，不作为 Serenity 内容报告。",
-                "",
-                "## 错误摘要",
-                "",
-                details.strip()[-4000:] or "未捕获到详细错误输出。",
                 "",
             ]
         ),
         encoding="utf-8",
     )
     return latest_path
+
+
+def is_stale_feed_failure(result: subprocess.CompletedProcess[str]) -> bool:
+    return STALE_FEED_MARKER in f"{result.stdout}\n{result.stderr}"
 
 
 def append_xhs_failure_notice(report_path: str, details: str) -> None:
@@ -99,7 +102,7 @@ def run_fetch_with_retries(
     sleeper: Callable[[float], None] = time.sleep,
 ) -> subprocess.CompletedProcess[str]:
     last = runner(command)
-    if last.returncode == 0:
+    if last.returncode == 0 or is_stale_feed_failure(last):
         return last
     total_retries = sum(max(0, retries) for _, retries in retry_schedule)
     retry_index = 0
@@ -118,7 +121,7 @@ def run_fetch_with_retries(
             if sleep_seconds > 0:
                 sleeper(sleep_seconds)
             last = runner(command)
-            if last.returncode == 0:
+            if last.returncode == 0 or is_stale_feed_failure(last):
                 return last
     return last
 
