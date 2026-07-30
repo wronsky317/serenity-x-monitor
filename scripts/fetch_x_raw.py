@@ -19,6 +19,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
@@ -31,11 +32,17 @@ DEFAULT_ENDPOINTS = (
     "https://api.supercycle.fi/api/feed",
 )
 DEFAULT_MAX_FEED_LAG_HOURS = 12.0
+X_PROFILE_PREFIX = "https://x.com"
+FXTWITTER_API_PREFIX = "https://api.fxtwitter.com"
 JINA_PROFILE_PREFIX = "https://r.jina.ai/https://x.com"
 
 
 class StaleFeedError(RuntimeError):
     """Raised when an endpoint responds successfully with an obsolete feed snapshot."""
+
+
+class IncompleteRecoveryError(RuntimeError):
+    """Raised when a finite recovery snapshot does not cover the requested window."""
 
 
 def now_stamp() -> str:
@@ -129,10 +136,35 @@ def validate_recovery_window(
     if any(in_time_window(row, since=since, until=until) for row in rows):
         return
     newest = newest_row_time(rows)
+    if since is not None and newest is not None and newest < since:
+        # A current profile whose newest post predates the window confirms that
+        # the account had no posts in the requested interval.
+        return
     raise StaleFeedError(
         f"Stale recovery feed from {endpoint}: no rows overlap the requested window; "
         f"newest row is {iso_for_cursor(newest)}"
     )
+
+
+def validate_recovery_coverage(
+    rows: list[dict[str, Any]],
+    *,
+    since: datetime | None,
+    endpoint: str,
+) -> None:
+    if since is None:
+        return
+    oldest = oldest_row_time(rows)
+    if oldest is None:
+        raise IncompleteRecoveryError(
+            f"Incomplete recovery from {endpoint}: no timestamped rows"
+        )
+    if oldest > since:
+        raise IncompleteRecoveryError(
+            f"Incomplete recovery from {endpoint}: oldest exposed row "
+            f"{iso_for_cursor(oldest)} is newer than requested since "
+            f"{iso_for_cursor(since)}; refusing to publish a partial report"
+        )
 
 
 def fallback_cursor_from_rows(rows: list[dict[str, Any]]) -> str | None:
@@ -205,6 +237,148 @@ def fetch_text(url: str, timeout: int) -> str:
         return response.read().decode("utf-8", errors="replace")
 
 
+class XProfileArticleParser(HTMLParser):
+    def __init__(self, handle: str) -> None:
+        super().__init__(convert_charrefs=True)
+        self.handle = handle.lower()
+        self.article_depth = 0
+        self.current: dict[str, str] | None = None
+        self.candidates: list[tuple[str, str]] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        values = {key: value or "" for key, value in attrs}
+        if tag == "article":
+            self.article_depth += 1
+            if self.article_depth == 1:
+                self.current = {}
+            return
+        if self.article_depth < 1 or self.current is None:
+            return
+        if tag == "meta":
+            itemprop = values.get("itemprop", "")
+            if itemprop in {"alternateName", "datePublished"} and itemprop not in self.current:
+                self.current[itemprop] = values.get("content", "")
+        elif tag == "a" and "status_id" not in self.current:
+            href = values.get("href", "")
+            match = re.search(
+                rf"(?:https://x\.com)?/{re.escape(self.handle)}/status/(\d+)(?:$|[/?#])",
+                href,
+                re.IGNORECASE,
+            )
+            if match:
+                self.current["status_id"] = match.group(1)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag != "article" or self.article_depth < 1:
+            return
+        if self.article_depth == 1 and self.current is not None:
+            author = self.current.get("alternateName", "").lstrip("@").lower()
+            status_id = self.current.get("status_id", "")
+            timestamp = self.current.get("datePublished", "")
+            if author == self.handle and status_id and timestamp:
+                self.candidates.append((status_id, timestamp))
+            self.current = None
+        self.article_depth -= 1
+
+
+def extract_x_profile_candidates(profile_html: str, handle: str) -> list[tuple[str, str]]:
+    parser = XProfileArticleParser(handle)
+    parser.feed(profile_html.replace("\x00", ""))
+    return list(dict.fromkeys(parser.candidates))
+
+
+def twitter_time_to_iso(value: str) -> str:
+    dt = datetime.strptime(value, "%a %b %d %H:%M:%S %z %Y")
+    return iso_for_cursor(dt) or ""
+
+
+def public_x_row(
+    handle: str,
+    status_id: str,
+    timestamp: str,
+    text: str,
+    author: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    author = author or {}
+    return {
+        "id": f"xpost:{status_id}",
+        "kind": "post",
+        "sortAt": timestamp,
+        "caller": {
+            "bio": str(
+                author.get("description")
+                or (
+                    "Only on X, don’t trust fake accs AI/Semi Supply Chains Research "
+                    "NFA DYOR, no paid promos; may trade/hold names disc, views my own."
+                )
+            ),
+            "handle": handle,
+            "name": str(author.get("name") or "Serenity"),
+            "path": f"/c/{handle}",
+            "profileImageUrl": str(
+                author.get("avatar_url")
+                or (
+                    "https://pbs.twimg.com/profile_images/"
+                    "1996176688414367744/LXfA_lIx_normal.jpg"
+                )
+            ),
+            "xUserId": str(author.get("id") or "1940360837547565056"),
+        },
+        "post": {
+            "canonicalUrl": f"https://x.com/{handle}/status/{status_id}",
+            "emphasizedPhrases": [],
+            "postedAt": timestamp,
+            "text": text,
+            "xPostId": status_id,
+        },
+    }
+
+
+def fetch_x_public_rows(
+    *,
+    handle: str,
+    timeout: int,
+    run_dir: Path,
+) -> tuple[list[dict[str, Any]], str]:
+    profile_url = f"{X_PROFILE_PREFIX}/{handle}"
+    profile_html = fetch_text(profile_url, timeout)
+    (run_dir / "x_profile.html").write_text(profile_html, encoding="utf-8")
+    candidates = extract_x_profile_candidates(profile_html, handle)
+    if not candidates:
+        raise ValueError(f"X public profile for @{handle} exposed no authored status rows")
+
+    rows: list[dict[str, Any]] = []
+    errors: list[str] = []
+    for status_id, profile_timestamp in candidates:
+        status_url = f"{FXTWITTER_API_PREFIX}/{handle}/status/{status_id}"
+        try:
+            data, raw = fetch_json(status_url, timeout)
+            (run_dir / f"fxtwitter_status_{status_id}.json").write_bytes(raw)
+            tweet = data.get("tweet")
+            if not isinstance(tweet, dict):
+                raise ValueError("response is missing tweet object")
+            author = tweet.get("author")
+            author = author if isinstance(author, dict) else {}
+            screen_name = str(author.get("screen_name") or "").lstrip("@").lower()
+            if screen_name != handle:
+                raise ValueError(f"unexpected author @{screen_name or 'unknown'}")
+            text = str(tweet.get("text") or "").strip()
+            if not text:
+                raise ValueError("tweet text is empty")
+            created_at = str(tweet.get("created_at") or "")
+            timestamp = twitter_time_to_iso(created_at) if created_at else profile_timestamp
+            rows.append(public_x_row(handle, status_id, timestamp, text, author))
+        except Exception as exc:
+            errors.append(f"{status_id}: {exc!r}")
+    if errors:
+        raise ValueError(
+            f"X public recovery was incomplete ({len(rows)}/{len(candidates)} rows): {errors}"
+        )
+    if not rows:
+        raise ValueError(f"X public recovery produced no usable rows: {errors}")
+    return rows, profile_url
+
+
 def extract_jina_status_ids(profile_text: str, handle: str) -> list[str]:
     pattern = re.compile(
         rf"https://x\.com/{re.escape(handle)}/status/(\d+)",
@@ -251,35 +425,6 @@ def extract_jina_post(status_text: str, handle: str, status_id: str) -> tuple[st
     return timestamp, text
 
 
-def jina_row(handle: str, status_id: str, timestamp: str, text: str) -> dict[str, Any]:
-    return {
-        "id": f"xpost:{status_id}",
-        "kind": "post",
-        "sortAt": timestamp,
-        "caller": {
-            "bio": (
-                "Only on X, don’t trust fake accs AI/Semi Supply Chains Research "
-                "NFA DYOR, no paid promos; may trade/hold names disc, views my own."
-            ),
-            "handle": handle,
-            "name": "Serenity",
-            "path": f"/c/{handle}",
-            "profileImageUrl": (
-                "https://pbs.twimg.com/profile_images/"
-                "1996176688414367744/LXfA_lIx_normal.jpg"
-            ),
-            "xUserId": "1940360837547565056",
-        },
-        "post": {
-            "canonicalUrl": f"https://x.com/{handle}/status/{status_id}",
-            "emphasizedPhrases": [],
-            "postedAt": timestamp,
-            "text": text,
-            "xPostId": status_id,
-        },
-    }
-
-
 def fetch_jina_rows(
     *,
     handle: str,
@@ -304,7 +449,7 @@ def fetch_jina_rows(
                 encoding="utf-8",
             )
             timestamp, text = extract_jina_post(status_text, handle, status_id)
-            rows.append(jina_row(handle, status_id, timestamp, text))
+            rows.append(public_x_row(handle, status_id, timestamp, text))
         except Exception as exc:
             errors.append(f"{status_id}: {exc!r}")
     if not rows:
@@ -385,40 +530,60 @@ def fetch_pages(args: argparse.Namespace, run_dir: Path) -> dict[str, Any]:
 
     if not selected_endpoint:
         target_handle = args.handle.lower().lstrip("@")
-        try:
-            rows, profile_url = fetch_jina_rows(
-                handle=target_handle,
-                timeout=args.timeout,
-                run_dir=run_dir,
-            )
-            validate_recovery_window(
-                rows,
-                since=since,
-                until=until,
-                endpoint=profile_url,
-            )
-            page_file = "page_001.full.json"
-            dump_json(run_dir / page_file, {"rows": rows, "source": profile_url})
-            selected_endpoint = profile_url
-            raw_rows.extend(rows)
-            pages.append(
-                {
-                    "page": 1,
-                    "url": profile_url,
-                    "file": page_file,
-                    "rows": len(rows),
-                    "recoverySource": "X public page via Jina Reader",
-                }
-            )
-            cursor = None
-        except Exception as exc:
-            endpoint_errors.append(
-                {
-                    "endpoint": f"{JINA_PROFILE_PREFIX}/{target_handle}",
-                    "error": repr(exc),
-                }
-            )
-            raise RuntimeError(f"All endpoints failed: {endpoint_errors}") from exc
+        recovery_sources = [
+            (
+                f"{X_PROFILE_PREFIX}/{target_handle}",
+                fetch_x_public_rows,
+                "X public profile + FxTwitter status API",
+            ),
+            (
+                f"{JINA_PROFILE_PREFIX}/{target_handle}",
+                fetch_jina_rows,
+                "X public page via Jina Reader",
+            ),
+        ]
+        for recovery_endpoint, recovery_fetcher, recovery_label in recovery_sources:
+            try:
+                rows, profile_url = recovery_fetcher(
+                    handle=target_handle,
+                    timeout=args.timeout,
+                    run_dir=run_dir,
+                )
+                validate_recovery_window(
+                    rows,
+                    since=since,
+                    until=until,
+                    endpoint=profile_url,
+                )
+                validate_recovery_coverage(
+                    rows,
+                    since=since,
+                    endpoint=profile_url,
+                )
+                page_file = "page_001.full.json"
+                dump_json(run_dir / page_file, {"rows": rows, "source": profile_url})
+                selected_endpoint = profile_url
+                raw_rows.extend(rows)
+                pages.append(
+                    {
+                        "page": 1,
+                        "url": profile_url,
+                        "file": page_file,
+                        "rows": len(rows),
+                        "recoverySource": recovery_label,
+                    }
+                )
+                cursor = None
+                break
+            except Exception as exc:
+                endpoint_errors.append(
+                    {
+                        "endpoint": recovery_endpoint,
+                        "error": repr(exc),
+                    }
+                )
+        if not selected_endpoint:
+            raise RuntimeError(f"All endpoints failed: {endpoint_errors}")
 
     stop_for_since = should_stop_after_page(raw_rows, since)
     for page_number in range(2, args.max_pages + 1):

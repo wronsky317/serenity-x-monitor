@@ -54,6 +54,18 @@ noise
         self.assertIn("`skipped` 不是推文无效", prompt)
         self.assertIn("原始 row 状态，不是报告结论等级", prompt)
 
+    def test_prompt_preserves_important_non_ticker_serenity_topics(self) -> None:
+        prompt = summary.build_prompt(
+            Path("/tmp/raw/20260701T000000Z"),
+            Path("/tmp/parsed/20260701T000000Z.md"),
+            "aleabitoreddit",
+        )
+
+        self.assertIn("重要性不以是否含证券代码为前提", prompt)
+        self.assertIn("人物/基金动态", prompt)
+        self.assertIn("FOMC 利率决议", prompt)
+        self.assertIn("Serenity 帖子中的", prompt)
+
 
 if __name__ == "__main__":
     unittest.main()
