@@ -298,11 +298,12 @@ def public_x_row(
     timestamp: str,
     text: str,
     author: dict[str, Any] | None = None,
+    kind: str = "post",
 ) -> dict[str, Any]:
     author = author or {}
     return {
         "id": f"xpost:{status_id}",
-        "kind": "post",
+        "kind": kind,
         "sortAt": timestamp,
         "caller": {
             "bio": str(
@@ -332,6 +333,74 @@ def public_x_row(
             "xPostId": status_id,
         },
     }
+
+
+def fxtwitter_timeline_rows(data: dict[str, Any], handle: str) -> list[dict[str, Any]]:
+    results = data.get("results")
+    if not isinstance(results, list):
+        raise ValueError("FxTwitter timeline response is missing results")
+    rows: list[dict[str, Any]] = []
+    for result in results:
+        if not isinstance(result, dict) or result.get("type") != "status":
+            continue
+        author = result.get("author")
+        author = author if isinstance(author, dict) else {}
+        screen_name = str(author.get("screen_name") or "").lstrip("@").lower()
+        if screen_name != handle:
+            raise ValueError(f"FxTwitter timeline returned unexpected author @{screen_name or 'unknown'}")
+        status_id = str(result.get("id") or "")
+        text = str(result.get("text") or "").strip()
+        created_at = str(result.get("created_at") or "")
+        if not status_id or not text or not created_at:
+            raise ValueError(f"FxTwitter timeline status is incomplete: id={status_id or 'missing'}")
+        timestamp = twitter_time_to_iso(created_at)
+        kind = "reply" if result.get("replying_to") else "post"
+        rows.append(public_x_row(handle, status_id, timestamp, text, author, kind))
+    if not rows:
+        raise ValueError(f"FxTwitter timeline for @{handle} produced no usable status rows")
+    return rows
+
+
+def fetch_fxtwitter_timeline_rows(
+    *,
+    handle: str,
+    timeout: int,
+    run_dir: Path,
+    since: datetime | None,
+    max_pages: int = 5,
+) -> tuple[list[dict[str, Any]], str]:
+    endpoint = f"{FXTWITTER_API_PREFIX}/2/profile/{handle}/statuses"
+    rows: list[dict[str, Any]] = []
+    cursor = ""
+    coverage_reached = since is None
+    for page_number in range(1, max_pages + 1):
+        params = {"count": "100"}
+        if cursor:
+            params["cursor"] = cursor
+        url = f"{endpoint}?{urllib.parse.urlencode(params)}"
+        data, raw = fetch_json(url, timeout)
+        (run_dir / f"fxtwitter_timeline_page_{page_number:03d}.json").write_bytes(raw)
+        page_rows = fxtwitter_timeline_rows(data, handle)
+        rows.extend(page_rows)
+        coverage_reached = timeline_page_reaches_since(page_rows, since)
+        if coverage_reached:
+            break
+        cursor_data = data.get("cursor")
+        next_cursor = cursor_data.get("bottom") if isinstance(cursor_data, dict) else ""
+        if not isinstance(next_cursor, str) or not next_cursor or next_cursor == cursor:
+            break
+        cursor = next_cursor
+    if not coverage_reached:
+        trailing = next(
+            (timestamp for row in reversed(rows) if (timestamp := row_time(row)) is not None),
+            None,
+        )
+        raise IncompleteRecoveryError(
+            f"Incomplete FxTwitter timeline recovery from {endpoint}: trailing row "
+            f"{iso_for_cursor(trailing)} is newer than requested since "
+            f"{iso_for_cursor(since)}; pagination ended before covering the full window"
+        )
+    return rows, endpoint
 
 
 def fetch_x_public_rows(
@@ -492,6 +561,18 @@ def should_stop_after_page(rows: list[dict[str, Any]], since: datetime | None) -
     return since is not None and oldest is not None and oldest < since
 
 
+def timeline_page_reaches_since(
+    rows: list[dict[str, Any]], since: datetime | None
+) -> bool:
+    if since is None:
+        return True
+    trailing = next(
+        (timestamp for row in reversed(rows) if (timestamp := row_time(row)) is not None),
+        None,
+    )
+    return trailing is not None and trailing <= since
+
+
 def fetch_pages(args: argparse.Namespace, run_dir: Path) -> dict[str, Any]:
     endpoint_errors: list[dict[str, str]] = []
     selected_endpoint = ""
@@ -531,6 +612,15 @@ def fetch_pages(args: argparse.Namespace, run_dir: Path) -> dict[str, Any]:
     if not selected_endpoint:
         target_handle = args.handle.lower().lstrip("@")
         recovery_sources = [
+            (
+                f"{FXTWITTER_API_PREFIX}/2/profile/{target_handle}/statuses",
+                lambda **kwargs: fetch_fxtwitter_timeline_rows(
+                    **kwargs,
+                    since=since,
+                    max_pages=args.max_pages,
+                ),
+                "FxTwitter profile statuses API",
+            ),
             (
                 f"{X_PROFILE_PREFIX}/{target_handle}",
                 fetch_x_public_rows,

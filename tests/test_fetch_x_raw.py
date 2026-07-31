@@ -26,6 +26,190 @@ def row(timestamp: str, row_id: str = "row-1") -> dict:
 
 
 class FetchXRawTest(unittest.TestCase):
+    def test_fxtwitter_timeline_recovers_more_than_public_profile_limit(self) -> None:
+        results = []
+        for index, timestamp in enumerate(
+            [
+                "Fri Jul 31 10:10:30 +0000 2026",
+                "Fri Jul 31 08:00:00 +0000 2026",
+                "Fri Jul 31 06:00:00 +0000 2026",
+                "Fri Jul 31 04:00:00 +0000 2026",
+                "Fri Jul 31 02:00:00 +0000 2026",
+                "Thu Jul 30 18:00:00 +0000 2026",
+                "Thu Jul 30 06:00:00 +0000 2026",
+            ],
+            start=1,
+        ):
+            results.append(
+                {
+                    "type": "status",
+                    "id": str(2083000000000000000 + index),
+                    "text": f"post {index}",
+                    "created_at": timestamp,
+                    "replying_to": None,
+                    "author": {
+                        "screen_name": "aleabitoreddit",
+                        "id": "1940360837547565056",
+                        "name": "Serenity",
+                    },
+                }
+            )
+
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(
+            fetcher,
+            "fetch_json",
+            return_value=({"results": results, "cursor": {}}, b'{"results":[]}'),
+        ):
+            rows, endpoint = fetcher.fetch_fxtwitter_timeline_rows(
+                handle="aleabitoreddit",
+                timeout=30,
+                run_dir=Path(tmp),
+                since=fetcher.parse_iso_utc("2026-07-30T07:00:00Z"),
+            )
+            archived = (Path(tmp) / "fxtwitter_timeline_page_001.json").exists()
+
+        self.assertEqual(len(rows), 7)
+        self.assertLessEqual(
+            fetcher.oldest_row_time(rows),
+            fetcher.parse_iso_utc("2026-07-30T07:00:00Z"),
+        )
+        self.assertIn("/2/profile/aleabitoreddit/statuses", endpoint)
+        self.assertTrue(archived)
+
+    def test_fxtwitter_timeline_paginates_until_since_boundary(self) -> None:
+        pages = [
+            {
+                "results": [
+                    {
+                        "type": "status",
+                        "id": "2083133191112843575",
+                        "text": "new",
+                        "created_at": "Fri Jul 31 10:10:30 +0000 2026",
+                        "replying_to": None,
+                        "author": {"screen_name": "aleabitoreddit"},
+                    }
+                ],
+                "cursor": {"bottom": "next-page"},
+            },
+            {
+                "results": [
+                    {
+                        "type": "status",
+                        "id": "2082500000000000000",
+                        "text": "old enough",
+                        "created_at": "Thu Jul 30 06:00:00 +0000 2026",
+                        "replying_to": None,
+                        "author": {"screen_name": "aleabitoreddit"},
+                    }
+                ],
+                "cursor": {},
+            },
+        ]
+
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(
+            fetcher,
+            "fetch_json",
+            side_effect=[
+                (pages[0], b'{"page":1}'),
+                (pages[1], b'{"page":2}'),
+            ],
+        ) as fetched:
+            rows, _ = fetcher.fetch_fxtwitter_timeline_rows(
+                handle="aleabitoreddit",
+                timeout=30,
+                run_dir=Path(tmp),
+                since=fetcher.parse_iso_utc("2026-07-30T07:00:00Z"),
+            )
+
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(fetched.call_count, 2)
+        self.assertIn("cursor=next-page", fetched.call_args_list[1].args[0])
+
+    def test_fxtwitter_timeline_ignores_old_pinned_row_for_coverage(self) -> None:
+        author = {"screen_name": "aleabitoreddit"}
+        pages = [
+            {
+                "results": [
+                    {
+                        "type": "status",
+                        "id": "2081000000000000000",
+                        "text": "old pinned post",
+                        "created_at": "Wed Jul 29 06:00:00 +0000 2026",
+                        "replying_to": None,
+                        "author": author,
+                    },
+                    {
+                        "type": "status",
+                        "id": "2083133191112843575",
+                        "text": "new",
+                        "created_at": "Fri Jul 31 10:10:30 +0000 2026",
+                        "replying_to": None,
+                        "author": author,
+                    },
+                ],
+                "cursor": {"bottom": "next-page"},
+            },
+            {
+                "results": [
+                    {
+                        "type": "status",
+                        "id": "2082500000000000000",
+                        "text": "old enough",
+                        "created_at": "Thu Jul 30 06:00:00 +0000 2026",
+                        "replying_to": None,
+                        "author": author,
+                    }
+                ],
+                "cursor": {},
+            },
+        ]
+
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(
+            fetcher,
+            "fetch_json",
+            side_effect=[
+                (pages[0], b'{"page":1}'),
+                (pages[1], b'{"page":2}'),
+            ],
+        ) as fetched:
+            rows, _ = fetcher.fetch_fxtwitter_timeline_rows(
+                handle="aleabitoreddit",
+                timeout=30,
+                run_dir=Path(tmp),
+                since=fetcher.parse_iso_utc("2026-07-30T07:00:00Z"),
+            )
+
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(fetched.call_count, 2)
+
+    def test_fxtwitter_timeline_rejects_exhausted_partial_window(self) -> None:
+        page = {
+            "results": [
+                {
+                    "type": "status",
+                    "id": "2083133191112843575",
+                    "text": "new",
+                    "created_at": "Fri Jul 31 10:10:30 +0000 2026",
+                    "replying_to": None,
+                    "author": {"screen_name": "aleabitoreddit"},
+                }
+            ],
+            "cursor": {},
+        }
+
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(
+            fetcher,
+            "fetch_json",
+            return_value=(page, b'{"page":1}'),
+        ):
+            with self.assertRaises(fetcher.IncompleteRecoveryError):
+                fetcher.fetch_fxtwitter_timeline_rows(
+                    handle="aleabitoreddit",
+                    timeout=30,
+                    run_dir=Path(tmp),
+                    since=fetcher.parse_iso_utc("2026-07-30T07:00:00Z"),
+                )
+
     def test_extracts_authored_candidates_from_x_profile_html(self) -> None:
         profile = """
 <article>
