@@ -31,3 +31,5 @@ state/*
 
 # Codex CLI scratch output
 *.codex_output.md
+
+PLAN_*
