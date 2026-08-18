@@ -13,6 +13,7 @@ import html
 import http.client
 import json
 import re
+import subprocess
 import sys
 import time
 import urllib.error
@@ -174,6 +175,52 @@ def fallback_cursor_from_rows(rows: list[dict[str, Any]]) -> str | None:
     return iso_for_cursor(oldest - timedelta(milliseconds=1))
 
 
+def decode_json_object(raw: bytes) -> dict[str, Any]:
+    data = json.loads(raw.decode("utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"Expected JSON object, got {type(data).__name__}")
+    return data
+
+
+def fetch_json_with_curl(url: str, timeout: int) -> tuple[dict[str, Any], bytes]:
+    try:
+        completed = subprocess.run(
+            [
+                "curl",
+                "--fail",
+                "--silent",
+                "--show-error",
+                "--location",
+                "--noproxy",
+                "*",
+                "--max-time",
+                str(timeout),
+                "--header",
+                "Accept: application/json,text/plain,*/*",
+                "--header",
+                (
+                    "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/126.0.0.0 Safari/537.36"
+                ),
+                url,
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=timeout + 5,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise urllib.error.URLError(f"curl request failed: {exc}") from exc
+    if completed.returncode != 0:
+        detail = completed.stderr.decode("utf-8", errors="replace").strip()
+        raise urllib.error.URLError(
+            f"curl exited with status {completed.returncode}: {detail or 'unknown error'}"
+        )
+    raw = completed.stdout
+    return decode_json_object(raw), raw
+
+
 def fetch_json(url: str, timeout: int) -> tuple[dict[str, Any], bytes]:
     # Treat HTTP 4xx/5xx (Cloudflare challenges, rate limits, transient server
     # errors) as retryable. The supercycle.fi CDN frequently returns 403/404/503
@@ -201,13 +248,20 @@ def fetch_json(url: str, timeout: int) -> tuple[dict[str, Any], bytes]:
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
                 raw = response.read()
-            data = json.loads(raw.decode("utf-8"))
-            if not isinstance(data, dict):
-                raise ValueError(f"Expected JSON object, got {type(data).__name__}")
-            return data, raw
+            return decode_json_object(raw), raw
         except transient_errors as exc:
             last_error = exc
             status = getattr(exc, "code", None)
+            hostname = urllib.parse.urlparse(url).hostname
+            if (
+                isinstance(exc, urllib.error.HTTPError)
+                and status == 403
+                and hostname == urllib.parse.urlparse(FXTWITTER_API_PREFIX).hostname
+            ):
+                try:
+                    return fetch_json_with_curl(url, timeout)
+                except urllib.error.URLError as curl_exc:
+                    last_error = curl_exc
             # 4xx other than 408 (Request Timeout) / 429 (Too Many Requests) is
             # almost always a permanent client error — no point hammering it.
             if (

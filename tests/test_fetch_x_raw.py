@@ -26,6 +26,51 @@ def row(timestamp: str, row_id: str = "row-1") -> dict:
 
 
 class FetchXRawTest(unittest.TestCase):
+    def test_fxtwitter_urllib_403_falls_back_to_curl(self) -> None:
+        url = "https://api.fxtwitter.com/2/profile/aleabitoreddit/statuses?count=100"
+        raw = b'{"results": [], "cursor": {}}'
+        forbidden = urllib.error.HTTPError(url, 403, "Forbidden", {}, None)
+        completed = fetcher.subprocess.CompletedProcess(
+            ["curl"],
+            0,
+            stdout=raw,
+            stderr=b"",
+        )
+
+        with mock.patch.object(
+            fetcher.urllib.request,
+            "urlopen",
+            side_effect=forbidden,
+        ), mock.patch.object(
+            fetcher.subprocess,
+            "run",
+            return_value=completed,
+        ) as curl_run:
+            data, fetched_raw = fetcher.fetch_json(url, timeout=30)
+
+        self.assertEqual(data, {"results": [], "cursor": {}})
+        self.assertEqual(fetched_raw, raw)
+        curl_command = curl_run.call_args.args[0]
+        self.assertIn(url, curl_command)
+        self.assertEqual(curl_command[curl_command.index("--noproxy") + 1], "*")
+
+    def test_non_fxtwitter_403_does_not_use_curl(self) -> None:
+        url = "https://example.com/private.json"
+        forbidden = urllib.error.HTTPError(url, 403, "Forbidden", {}, None)
+
+        with mock.patch.object(
+            fetcher.urllib.request,
+            "urlopen",
+            side_effect=forbidden,
+        ), mock.patch.object(
+            fetcher.subprocess,
+            "run",
+        ) as curl_run, mock.patch.object(fetcher.time, "sleep"):
+            with self.assertRaises(urllib.error.HTTPError):
+                fetcher.fetch_json(url, timeout=30)
+
+        curl_run.assert_not_called()
+
     def test_fxtwitter_timeline_recovers_more_than_public_profile_limit(self) -> None:
         results = []
         for index, timestamp in enumerate(
