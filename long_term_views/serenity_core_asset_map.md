@@ -1,8 +1,8 @@
 # Serenity Core Asset Map
 
-Last updated: 2026-07-18
+Last updated: 2026-09-01
 
-Source basis: local archive `raw/20260627T021227Z`, parsed archive `parsed/20260627T021227Z.md`, covering Serenity rows from 2026-04-23 to 2026-06-26; reviewed and merged pending updates `long_term_views/merged/2026-06-27.md` through `2026-07-18.md`, covering daily local runs through `raw/20260718T131506Z`.
+Source basis: local archive `raw/20260627T021227Z`, parsed archive `parsed/20260627T021227Z.md`, covering Serenity rows from 2026-04-23 to 2026-06-26; reviewed and merged pending updates `long_term_views/merged/2026-06-27.md` through `2026-09-01.md` (no `2026-08-22.md` candidate was generated), covering daily local runs through `raw/20260901T100024Z`.
 
 Scope: This is a maintained interpretation of Serenity's public-view framework, not financial advice and not independently verified.
 
@@ -19,10 +19,10 @@ Secondary but important themes:
 
 1. Neocloud / AI compute ownership.
 2. AI data-center power and power semiconductors.
-3. Advanced packaging, PCB, glass core, and CPO inspection.
+3. Advanced packaging, PCB, glass core, passives, and CPO inspection.
 4. Physical AI / humanoid robotics.
 
-Reviewed updates through 2026-07-18 reinforce photonics / CPO as the leading bottleneck thesis, especially merchant CW lasers that can serve pluggables, NPO, and CPO rather than relying on one architecture. They also strengthen the case that memory tightness may persist across years, add company-level production and contract verification variables, and shift humanoid-robotics analysis away from linear unit forecasts toward actuator capacity, yield, ASP, and real deployment evidence. Neocloud contracts and advanced-packaging expansion remain important but conditional validation lines.
+Reviewed updates through 2026-09-01 keep photonics / CPO as the leading bottleneck thesis, but move the evidence chain from architecture mapping toward foundry allocation, qualification, test revenue, and customer conversion. They also extend memory-tightness evidence into multi-year capacity agreements and legacy DDR2/DDR3, NOR, and SLC NAND, while Serenity's positioning commentary suggests the broad memory rerating phase may be less attractive than future profit delivery and under-researched niches. Neocloud contracts and prepayments improve demand visibility, but circular financing, utilization, and the later 2027 revenue ramp remain central constraints. Glass-core commercialization has slipped, while MLCC, ABF/CCL, traditional packaging, FAU, connectors, and test have become a broader second-order bottleneck watchlist rather than separate proven core themes.
 
 Do not merge every robotics or infrastructure mention into Memory/HBM. Recent reports repeatedly warn that Optimus / Agility / LeaderDrive / Schaeffler / floating DC / Samsung glass substrate items are not HBM theses unless the source explicitly discusses DRAM, NAND, HBM supply-demand, or a named memory company.
 
@@ -38,17 +38,22 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - `AXTI`: substrate / wafer supply-chain exposure, reinforced by a three-year wafer agreement with `COHR` and a disclosed prepayment for committed capacity.
 - `MRVL`: DSP and AI networking/CPO semiconductor exposure.
 - `POET`: CPO scale-out and photonics module optionality.
+- `VIAV`, `FORM`: CPO test and production-infrastructure watch. Serenity's August review treated reported VIAV orders and early CPO revenue as evidence that test can monetize before broad system deployment; the read-through to FORM still requires company-level proof.
+- `MTSI`, `SMTC`: TIA, driver, DSP-adjacent, and laser-supply read-throughs that helped triangulate the 1.6T / optical-component shortage. They are supporting evidence, not substitutes for company-specific orders and margins.
 - `TSEM`, `GFS`, `JBL`: manufacturing, foundry, and optical packaging ecosystem.
 - `AXTI`, `SOI.PA`, `XFAB.PA`, `IQE`: compound semiconductor, substrate, SOI, and specialty foundry exposure.
 - `3105.TWO` Win Semi and `6451.TW` Shunsin: Taiwan CPO / photonics packaging and test chain.
 
 ### Possible Cycle
 
-- 2026 H2: CPO scale-out and 1.6T-related validation begins to matter more.
+- 2026 H2: CPO scale-out and 1.6T-related validation begins to matter more; testing and production infrastructure may show revenue before broad optical-engine deployment.
 - Late H2 2026 into 2027: Sivers customer qualification, qualified-wafer allocation, yield, and HVM absorption become the central bridge from supplier mapping to operating results.
+- 2027 H1: POET / Sivers-related production language may progress to batch orders, but this is a Serenity inference rather than confirmed guidance.
+- 2027 H2: multiple management and project references converge around CPO scale-up, ELS, FAU, and early optical-connectivity deployment; this is now the main intermediate validation window.
 - H2 2026: POET production ramp, Lumilens commercialization, and AXTI-COHR wafer supply execution become watchpoints, but customer concentration and qualification risk remain high.
 - 2027: Jabil 1.6T LRO, Ayar / Nvidia NVLink CPO, GFS / AMD pathways may become clearer.
 - 2027 H2 to 2028: key photonics volume-ramp and rerating window in Serenity's framework.
+- 2028: X-FAB's photonics volume-production timing, later than Serenity's former H2 2027 estimate, is a concrete reminder that participation can be real while monetization slips.
 - 2027 to 2028: Apple / consumer photonics or wearable sensing could become an additional option if validated.
 
 ### Watchpoints
@@ -56,15 +61,22 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - Sivers Nasdaq listing.
 - Sivers financing completion, investor quality, lock-up terms, proceeds deployment, and conversion from expansion capital to HVM evidence.
 - Sivers volume ramp evidence with Jabil, Ayar, GFS, AMD, MRVL, Apple, or Win Semi.
-- Sivers production elasticity: qualified-wafer allocation, yield, array ASP, gross margin, customer qualification, and whether demand absorbs incremental capacity. Scenario outputs are not forecasts until these inputs are disclosed.
+- Sivers production elasticity: its two reported foundry allocations, qualified-wafer availability, yield, array ASP, gross margin, capital spending, customer qualification, and whether demand absorbs incremental capacity. Six reported pluggable-customer discussions and a large opportunity pipeline are not contracts or revenue.
+- Sivers / SemiNex development work, AEVA optical-connectivity JDA mapping, and whether either becomes a named, funded volume relationship rather than an inferred supply chain.
+- Sivers management execution: Nasdaq timetable, capital allocation, disclosure of project economics, and the conversion sequence from qualification to initial order to volume production. Insider buying is alignment evidence, not operating proof.
 - Nvidia investment, LTAs, or ecosystem confirmation for CPO / optical interconnect.
 - 1.6T LRO and CPO programs moving from sampling/qualification to volume.
+- VIAV / FORM CPO test orders, revenue scale, and whether the reported late-2026 acceleration persists; distinguish test monetization from full-system HVM.
+- 1.6T versus 800G mix: reported rapid 1.6T growth can coexist with a long 800G tail, consistent with pluggable, NPO, and CPO coexisting rather than one path immediately replacing another.
 - Innolight 800G demand, 1.6T/3.2T mix, and customer broadening as industry read-through; do not treat this as realized revenue for AAOI, LITE, SIVE, or SOI without company-level confirmation.
 - AAOI 800G/1.6T construction and order conversion. Serenity's $1.4bn initial quarterly-revenue marker for 2027 Q3 is a high-risk falsifiable anchor, not a base-case forecast.
 - POET H2 2026 production ramp, customer disclosure, optical-engine demand, and whether it gets AAOI-like named hyperscaler validation.
 - AXTI-COHR agreement execution, wafer demand persistence, and utilization impact.
 - InP substrate / epiwafer pricing, X-FAB photonics volume contracts, and TSEM SiPho / SiGe / advanced-packaging capacity as upstream confirmation rather than automatic proof of downstream revenue.
 - SemiAnalysis / Tema photonics ETF controversy, CPO timing disputes, and whether industry rebuttals are confirmed by customer orders rather than narrative.
+- Possible US restrictions on newer Chinese optical transceivers: final text, product scope, exemptions, customer qualification, and whether any demand actually shifts to AAOI, LITE, COHR, SIVE / JBL or other non-China suppliers.
+- CPO bottlenecks beyond light engines: FAU / fiber, connectors, photodiodes, TIA / drivers, PCB / substrate, packaging, and test. Treat channel checks and long lead times as a verification list, not proof that every mapped supplier benefits.
+- SK Hynix optical-memory / CPO route, Ayar / Celestial / Marvell participation, and any SIVE or ams-OSRAM read-through. Serenity explicitly described these links as speculation.
 - Whether SIVE remains a merchant laser bottleneck rather than being displaced by vertically integrated suppliers.
 - Whether high-beta optical names recover after drawdowns or show thesis impairment.
 
@@ -73,6 +85,7 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - AI clusters need faster and more power-efficient interconnect.
 - CPO and optical interconnect may shift value toward lasers, photonics foundries, DSPs, packaging, and testing.
 - Ultra-high-power CW lasers may have broader architectural durability than VCSEL-centered interpretations because the same merchant laser capacity can serve pluggables, NPO, and CPO pathways.
+- Multiple August management read-throughs suggested that qualified InP / CW DFB capacity, rather than assembly alone, is the nearer constraint. Internal consumption by vertically integrated vendors may tighten the external merchant market, but shortages must still convert to orders, pricing, and margin.
 - Small suppliers can rerate sharply if they become validated bottlenecks.
 - Serenity treats drawdowns in photonics as expected early-supercycle volatility, but concentration risk is high.
 - Recent Meta capex / neocloud debate reinforced Serenity's view that photonics selloffs can reflect AI infrastructure narrative misreads rather than real demand impairment; this remains contingent on Meta and hyperscaler capex actually staying high.
@@ -82,11 +95,14 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - CPO timelines slip materially beyond 2027-2028.
 - Cross-architecture demand fails to offset a CPO delay, or the assumed CW-laser bottleneck is relieved by customer redesign, VCSEL alternatives, or excess qualified capacity.
 - Major customers dual-source away from SIVE or vertically integrate lasers.
+- Foundry allocations, customer discussions, or development agreements fail qualification or remain uneconomic; management does not disclose enough capacity and project economics to support the modeled ramp.
 - Optical TAM assumptions prove inflated.
 - SIVE fails to convert mapping evidence into revenue, margin, and customer disclosure.
 - Local-market/media volatility becomes financing or listing risk.
 - Information-source disputes, ETF launch conflicts, or CPO-timing articles create sentiment volatility without necessarily validating or invalidating fundamentals.
 - POET or other optionality names fail to secure named customer validation, even if the broader photonics bottleneck thesis stays intact.
+- Marvell or other vertically integrated platforms compress external optical-interposer / packaging-IP opportunities, including the more speculative POET mappings.
+- Policy restrictions are diluted, delayed, circumvented, or fail to shift qualified orders to non-China suppliers.
 
 ## Theme 2: AI Memory / HBM / DRAM / NAND
 
@@ -97,6 +113,7 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - `005930.KO` Samsung: broad memory exposure.
 - `EWY`: Korea memory beta.
 - `SNDK`: NAND / storage-cycle expression.
+- ESMT (`3006` as written in the source) and Etron: watch-only legacy-memory candidates spanning DDR2/DDR3, NOR, SLC NAND, and embedded-memory products. Serenity's late-August thesis is based on capacity migration, low BOM sensitivity, pricing, and operating leverage; exchange-qualified ticker mapping and earnings durability remain unverified.
 - `TSM`: manufacturing anchor for AI and robotics chips.
 - Upstream / equipment watchlist: `KLAC`, `AMAT`, Foosung, Techwing, Towa, and other memory capex beneficiaries.
 - `AEHR`: watch-only burn-in / test exposure. The durable verification line now spans AI processors, silicon photonics, networking, and NAND/HBM customers; qualification must convert to HVM before conviction rises.
@@ -108,6 +125,9 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - HBM4 / next-generation packaging and capex cycles can broaden the trade beyond MU/SK Hynix/Samsung.
 - 2028+: Serenity continues to describe memory and photonics as potentially bottlenecked past 2028, but recent reports did not add new company-level HBM evidence.
 - 2026 onward: falling DRAM demand-fulfillment rates and customer LTAs suggest tightness may persist across years, but the duration and magnitude remain dependent on supplier capex and contract disclosure.
+- 2027: repeated posts reject an early-2027 glut and instead point to allocated or sold-out DRAM/HBM and NAND capacity. “Sold out” may mean reservation or allocation rather than delivered, fixed-price revenue.
+- 2029 to 2031: company and channel statements cited by Serenity extend shortage or LTA visibility into this period, including a report that roughly 70% of Samsung memory capacity is reserved through 2031. These are outer-bound watch windows, not audited base-case forecasts and not specifically HBM unless the source says so.
+- Late 2026 into 2027: legacy-memory tightness may cascade from DDR4 into DDR3/DDR2, NOR, and SLC NAND as leading suppliers favor higher-value products.
 
 ### Watchpoints
 
@@ -118,7 +138,11 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - Industry commentary from Micron CEO, TSM, Tesla, Nvidia, and hyperscalers.
 - Whether memory demand remains structural rather than reverting to a short cycle.
 - Samsung DRAM pricing, reported multi-year MU / SK Hynix bottlenecks, and 16T+ LTA claims; treat these as transcribed validation points until company disclosures confirm scope and duration.
+- Distinguish capacity reservations, LTAs, purchase commitments, allocated supply, final pricing, shipment, and recognized revenue. Long duration improves visibility only if counterparties, volume, and pricing mechanisms hold.
 - SLC NAND pricing and the possible operating leverage of Winbond, Macronix, SkyHigh Memory, and Puya Semi. Keep this watch-only and do not use the rejected `688049.SHG` mapping for Puya Semi.
+- ESMT / Etron legacy-memory pricing, PSMC wafer-cost pass-through, foundry allocation, inventory monetization, and whether unusually strong monthly earnings persist. Do not annualize one month as a durable earnings base.
+- Whether AI/HBM capacity migration really tightens commodity and legacy categories, or whether new capacity, redesigns, demand elasticity, and Chinese supply offset the cascade.
+- Apple and other large buyers' supplier mix and bargaining power as supply tightens; policy pressure on Chinese memory sourcing is an additional variable, not proof of an order transfer.
 - AEHR customer qualifications, benchmark-customer identity, orders, and HVM conversion; do not assume an unnamed NAND customer is SNDK.
 - Whether humanoid inference/storage actually creates measurable DRAM/NAND content per robot; recent robotics posts support this only where the original text explicitly mentioned DRAM/NAND.
 
@@ -128,6 +152,7 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - Humanoid robots and on-device AI could require much more memory per unit than current autonomous systems.
 - Memory capex may create second-order winners in equipment, materials, testing, and Korean/Taiwan supply chains.
 - LTAs can indicate that customers value assured supply, but they do not prove identical pricing power or upside across DRAM, NAND, HBM, and every memory supplier.
+- The thesis has shifted from broad valuation discovery toward operating-profit delivery and narrower mismatches. Serenity reported trimming most mainstream memory exposure after large reratings while retaining Samsung / SK Hynix exposure and researching legacy-memory niches; this is positioning commentary, not audited portfolio advice.
 - Probe cards, test sockets, OSAT capacity, CXL/DDR4, and Taiwan substrate/test supply chains appeared in a mixed news roundup and should be tracked as possible adjacency, not automatically merged into the HBM core thesis.
 
 ### Invalidation Risks
@@ -137,6 +162,8 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - AI server capex slows or GPU/ASIC cycles pause.
 - Memory makers overbuild capacity into 2027-2028.
 - Reported shortages, price increases, or LTAs fail to appear in audited revenue, margin, utilization, and contract disclosures.
+- Legacy-memory pricing fades, customers redesign around older parts, wafer costs outrun ASP gains, or one-month profit and inventory effects are mistaken for normalized earnings.
+- The sector's supply-demand thesis remains intact but further multiple expansion stalls after the broad rerating, leaving returns dependent on profit realization.
 - AI inference optimization materially reduces accelerator or memory intensity faster than new demand grows.
 
 ## Theme 3: AI Data-Center Power / 800V DC / Power Semiconductors
@@ -173,6 +200,7 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - AI clusters are power constrained.
 - Moving from GPU scarcity to energy/power infrastructure scarcity can broaden the AI trade.
 - Power semis, electrical equipment, grid hardware, and storage may become second-wave beneficiaries.
+- Rising hyperscaler capex and reported capacity shortages support the infrastructure-demand frame, but aggregate capex cannot be mechanically assigned to power, cooling, memory, optics, or any individual supplier.
 - The power theme now overlaps with national-security supply-chain logic: energy, grid, storage, rare earths, and robotics components are being discussed together as AI infrastructure bottlenecks.
 
 ### Invalidation Risks
@@ -182,6 +210,7 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - China-driven price signals reverse quickly.
 - Grid or policy bottlenecks delay deployments rather than benefiting suppliers.
 - AI cold-war thesis weakens if hyperscalers materially cut capex or policy pressure eases.
+- Inflation, long rates, or tighter financing raise project hurdle rates before contracted capacity produces cash flow; the decisive invalidation remains a cut in cloud capex or weakening compute demand, not macro headlines alone.
 - Rare-earth / magnet reshoring proxies fail to convert policy attention into orders, margin, or capacity.
 
 ## Theme 4: Neocloud / AI Compute Ownership
@@ -192,6 +221,7 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - `META`: AI compute commercialization watch. Recent posts frame Meta selling excess AI compute as demand strength, unit-economics validation, and a possible new revenue stream rather than capex retreat.
 - `CRWV`: neocloud / AI infrastructure peer and Meta-related capacity provider watch.
 - `WULF`: watch-only demand-validation case through the reported Anthropic lease; economics, delivery, financing, and customer concentration require confirmation before it becomes a broader industry proxy.
+- `RIOT`, `HUT`: watch-only miner-to-colocation conversion cases. Reported Anthropic / AMD arrangements and long-duration leases can validate demand, but headline contract value, capacity delivery, financing, and revenue recognition must be separated.
 - `CBRS`: high-throughput inference capacity watch; evidence is still anecdotal and needs customer / capacity disclosure.
 - `AMZN`: favored hyperscaler due to AWS, Trainium, warehouse robotics, and AI capex monetization.
 - `GOOGL`: second-favored hyperscaler; Gemini, TPU, search defense, ads, and cloud.
@@ -205,26 +235,31 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - 2026 to 2028: financing quality, GPU utilization, customer contracts, and ARR determine durability.
 - 2026 to 2027: Meta AI cloud / excess compute commercialization and take-or-pay neocloud contracts become a key test of whether AI compute resale is demand validation or overcapacity.
 - 2026 to 2028: sovereign AI data centers, including Australia as a possible Anthropic-related capacity location, may broaden the neocloud map if contracts, power, and financing are confirmed.
+- H2 2027: Serenity expects many former-miner / colocation revenue inflections to cluster here, making the long construction and financing bridge as important as announced contract value.
 
 ### Watchpoints
 
 - NBIS ARR, customer announcements, financing quality, and data-center expansion.
+- NBIS customer prepayments, contracted power, 2027 capacity demand, deployment pace, and whether strategic-investor relationships translate into durable economics rather than preferential headlines alone.
 - Meta capex guidance, AI cloud productization, external compute customers, pricing, and whether Meta competes materially with AWS/Azure/GCP.
 - CRWV / NBIS unit economics, customer concentration, resale margins, take-or-pay contract execution, and acquisition interest.
 - NBIS execution on the reported Reflection AI long-term compute agreement, including counterparty funding, deployment, and revenue conversion.
 - CBRS / Cerebras capacity queue, OpenAI exposure, Groq availability, and 1-2K tokens/sec inference customer demand.
 - Hyperscaler leasing and AI compute demand.
+- Contract durability for older accelerators: one reported A100 deployment extending to 2029 suggests economic life may exceed some rapid-obsolescence assumptions, but it is not evidence for every GPU fleet.
 - Meta-Anthropic compute leasing discussions and Anthropic-linked capacity plans in Australia. These are commercial-model evidence only while talks, contracts, economics, financing, and delivery remain unconfirmed.
 - Nvidia capital or ecosystem validation.
 - IREN founder SBC, ATM usage, dilution, governance response, and whether any Australia / Anthropic-linked capacity demand converts into credible customer contracts.
 - IREN / SHAZ Australia sovereign DC: customer, capacity, power procurement, financing, and go-live timing.
 - Whether neocloud margins survive competition from hyperscalers.
+- Financing circularity: distinguish end-customer demand from arrangements in which chip suppliers finance data centers that then purchase their chips. Non-binding commitments, guarantees, utilization, and cash returns matter alongside capex totals.
 
 ### Long-Term Logic Factors
 
 - AI compute owners can compound if they control scarce infrastructure and credible customers.
 - Financing quality matters as much as GPU count.
 - Long-term capacity agreements can validate demand and customer diversification, but their value depends on counterparty credit, financing, delivery, and utilization.
+- Prepayments, power reservations, and older-GPU contracts can improve visibility, but each sits at a different point between customer intent and recurring cash generation.
 - Serenity strongly prefers NBIS-style narratives over IREN-style dilution stories.
 - Meta excess compute selling can be bullish if it proves demand depth and monetizable capacity, but bearish if it reflects true overbuild.
 - Sovereign AI capacity could become a regional subtheme if frontier labs need localized power / compute / data-center availability.
@@ -238,6 +273,7 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - Meta reduces capex or external compute demand weakens.
 - IREN-style miner-to-AI narratives use AI headlines to justify dilution without confirmed customers.
 - Contract headlines fail to convert to funded deployments, recurring revenue, or acceptable unit economics; one WULF, NBIS, or Meta event is incorrectly generalized to the whole neocloud sector.
+- The construction-to-revenue bridge extends into late 2027 while financing costs, dilution, or technology obsolescence arrive earlier.
 - Sovereign DC projects fail on power, grid, permitting, customer commitment, or financing.
 
 ## Theme 5: Physical AI / Humanoid Robotics
@@ -247,6 +283,7 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - `TSLA`: Optimus / physical AI expression.
 - `CCXI` / Agility Robotics: newly elevated watchlist / possible pure-play humanoid exposure. Serenity repeatedly describes Agility as a favored US humanoid path and `CCXI` as a public-market vehicle, while also acknowledging SPAC / listing and execution risk.
 - Agility Robotics, Figure, Boston Dynamics, Apptronik, Unitree: private or not-directly-tradable humanoid / embodied AI reference companies used for ecosystem mapping.
+- Unitree also became Serenity's public-market valuation and hardware-capability reference case in August. IPO demand and first-day pricing are sentiment data, not proof of deployment, margins, or a direct valuation transfer to Agility / CCXI.
 - `688017.SHG` LeaderDrive / 绿的谐波: Chinese humanoid component exposure.
 - `6324.T` Harmonic Drive: Japanese robot reducer exposure.
 - Vishay Precision / `VPG`: sensor and possible Optimus supply-chain watch; not confirmed supply.
@@ -271,6 +308,7 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 
 - Tesla Optimus production, cost curve, customer trials, and internal deployment.
 - Agility Robotics / CCXI listing timing, transaction terms, AMZN / MELI deployments, RoboFab capacity, V5 production, 75% US-parts claim, and BOM under $30k goal.
+- Unitree filing / listing facts, comparable operating metrics, standardized hardware tests, and whether Chinese hardware capability translates into durable commercial deployment. Do not infer CCXI value mechanically from Unitree trading.
 - LeaderDrive / Harmonic Drive orders, margins, and customer mix.
 - Vishay Precision sensor design-ins and whether Optimus or other humanoids confirm supply.
 - Schaeffler, Nabtesco, Sanhua: humanoid-customer count, 10% share targets, order conversion, debt / EV constraints, and robot revenue as a share of total sales.
@@ -280,6 +318,7 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - Hwashin and other claimed Atlas supplier mappings require company or customer confirmation before inclusion as core companies.
 - JD delivery replacement, AMZN avoided-hiring / warehouse automation, GM factory robotics with NVDA, and actual labor-to-maintenance-role transitions.
 - US national robotics strategy, ISO / safety standards, rare-earth subsidies, Made-in-USA supply-chain localization, and export-control risk for China-dependent robot supply chains.
+- Possible US restrictions on Chinese humanoid / quadruped imports and any resulting order transfer to domestic platforms. Policy headlines are not a confirmed moat until scope, enforcement, and domestic capacity are visible.
 - Robot cosmetics / skin / bionic materials / full-size consumer humanoid demand; currently too vague for a core investable thesis.
 - Apple / Google / Samsung consumer optical sensing product evidence.
 
@@ -305,18 +344,21 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - Regulation, labor backlash, safety, maintenance complexity, or deployment reliability slows enterprise adoption.
 - Structured parser proxies are mistaken for direct Serenity thesis or confirmed supply relationships.
 
-## Theme 6: Advanced Packaging / PCB / Glass Core / CPO Inspection
+## Theme 6: Advanced Packaging / PCB / Glass Core / Passives / CPO Inspection
 
 ### Core Companies
 
 - `2316.TW` WUS Printed Circuit: AI PCB and NAV-discount rerating angle.
 - `LPK` / LPKF: glass core substrate / advanced packaging / CPO-adjacent equipment.
 - `ONTO`: yield / inspection equipment watch, directly mentioned in recent glass substrate discussion.
+- `VIAV`, `FORM`, `KEYS`: optical / CPO test watchlist. VIAV had the clearest reported early order and revenue signal; peer read-throughs still require direct disclosure.
 - `KLAC`, `AMKR`: structured / adjacent watch for inspection and OSAT; distinguish from direct evidence.
 - `6451.TW` Shunsin: Foxconn photonics packaging/test arm.
 - `3105.TWO` Win Semi: InP / photonics / CPO supply chain.
 - `TSEM`, `GFS`, `JBL`: silicon photonics and packaging ecosystem.
 - Watchlist: Ibiden, Towa, Techwing, Msscorps, and related Korea/Japan/Taiwan equipment names.
+- Passive-component watchlist: Taiyo Yuden (`6976` as written), Murata, Samsung Electro-Mechanics, Yageo, Walsin, TDK, and Vishay. AI-server MLCC demand and capacity migration may tighten general products, but product mix and ticker mapping must be verified.
+- Substrate / material watchlist: Unimicron, Nan Ya PCB, Ibiden, Elite Material, Shengyi, TUC, ITEQ, and related ABF / CCL / HVLP copper-foil suppliers. These are mapping candidates, not a single confirmed beneficiary basket.
 
 ### Possible Cycle
 
@@ -324,11 +366,15 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - 2027: glass core, HBM4, and CPO qualification move toward higher-volume deployment.
 - H2 2027: Samsung Electro-Mechanics / Sumitomo Chemical / Dongwoo-related glass-core substrate JV aims at full-scale commercialization; Serenity treats this as more concrete than generic early ramp.
 - 2027 to 2028: inspection, packaging, and specialty substrates may become clearer bottlenecks.
+- 2027: reported SKC Absolics commercialization has slipped from H2 2026 into 2027; equipment and inspection revenue assumptions should move with qualification, not the original schedule.
+- H1 2028: a later Samsung glass-substrate timing cited by Serenity, versus the previous H2 2027 expectation. This weakens near-term timing without invalidating the material transition.
+- H2 2026 to early 2027: AI-server MLCC capacity migration may spill into shortages for consumer and general-purpose products.
 
 ### Watchpoints
 
 - AI PCB orders and utilization.
 - Glass core substrate from pilot to qualification to volume.
+- SKC Absolics and Samsung reliability validation and revised production dates; watch for further slippage before assuming LPKF, Philoptics, E&R, or inspection-equipment revenue.
 - Samsung / Sumitomo / GlaSSEM / Dongwoo JV funding, capex, and H2 2027 commercialization timeline.
 - TGV / LIDE equipment orders and whether LPKF / LPK receives pre-ramp capex.
 - Onto yield / inspection demand and whether KLAC / AMKR are merely broad substitutes or true beneficiaries.
@@ -338,6 +384,8 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - TSEM SiPho / SiGe / advanced-packaging expansion and whether new capacity wins qualified volume programs.
 - WUS asset monetization or rerating.
 - Probe card / test socket, OSAT, CXL/DDR4, and Taiwan substrate price signals from mixed news roundups; require direct validation before raising conviction.
+- MLCC lead times, AI-server content per system, capacity additions, general-purpose product availability, and whether Taiyo Yuden / Murata / Samsung Electro-Mechanics exposure converts to price and margin rather than just longer queues.
+- ABF, HDI, multilayer PCB, CCL, HVLP copper foil, photodiodes, high-end drill bits, traditional wire-bond packaging, and FOPLP: verify orders, product mix, customer qualification, costs, and expansion before treating channel shortages as earnings.
 
 ### Long-Term Logic Factors
 
@@ -345,15 +393,18 @@ Do not merge every robotics or infrastructure mention into Memory/HBM. Recent re
 - CPO and photonics increase requirements for inspection, packaging, substrates, and foundry integration.
 - PIC, FAU, specialty foundry, and advanced-packaging expansion can validate ecosystem investment, but should remain adjacency evidence until orders, utilization, and margins identify the actual value capture.
 - Glass core substrate can create upstream equipment demand before full commercial production if qualification and yield work accelerate.
+- AI infrastructure can create cascade bottlenecks when capacity migrates toward high-value server products, tightening older or general-purpose MLCC, memory, PCB, and packaging capacity. Each category requires its own causal proof and must not be collapsed into HBM.
 
 ### Invalidation Risks
 
 - Glass core adoption is delayed.
+- Reliability qualification pushes SKC / Samsung schedules beyond the revised 2027 / 2028 windows, leaving equipment orders stranded or deferred.
 - Packaging bottlenecks are solved by larger integrated vendors.
 - Small-cap suppliers fail to pass qualification or scale.
 - Samsung glass substrate evidence is misread as Samsung HBM thesis; keep those themes separate.
 - JV or H2 2027 timelines slip, or equipment orders are captured by broader incumbents rather than smaller watchlist names.
 - Announced PIC, FAU, SiPho / SiGe, or advanced-packaging capacity fails qualification or creates oversupply rather than bottleneck economics.
+- Long lead times reflect temporary restocking, product-mix mismatch, duplicate orders, or input-cost inflation rather than durable AI demand; passive and PCB suppliers fail to translate tightness into margins.
 
 ## Theme 7: Platforms / Fintech / Other Satellites
 
@@ -381,6 +432,8 @@ These are not the center of Serenity's long-term AI supply-chain framework. Trea
 - Pure meme names such as `WEN`: sentiment observation, not core long-term thesis.
 - High-beta photonics names: even within a bullish supercycle, Serenity acknowledges 30-40% drawdowns and concentration risk.
 - SemiAnalysis / Tema photonics ETF controversy: reputational and information-source risk; does not by itself establish optical-company fundamentals.
+- Forged screenshots and off-platform promotions: Serenity specifically rejected fabricated order claims, including a purported Innolight / Nvidia NPO order. Only traceable posts from the source account qualify as Serenity evidence; company orders still require first-party confirmation.
+- `AAOI`: demand and capacity logic may remain positive while ATM issuance or other financing dilutes shareholders. Operating demand and capital-allocation quality must be tracked separately.
 - Raw row status labels: `thesis`, `failed`, and `skipped` are upstream parser states, not confidence levels. Failed/skipped rows can contain valid text, but must be merged only after source-text and causality review.
 
 ## Priority Tiers
@@ -419,6 +472,10 @@ These are not the center of Serenity's long-term AI supply-chain framework. Trea
 - `2316.TW`
 - `LPK` / LPKF
 - `ONTO`
+- `VIAV`
+- `MTSI`
+- `SMTC`
+- `IQE`
 - `AXTI`
 - `CCXI` / Agility Robotics path
 - `CRWV`
@@ -454,6 +511,12 @@ These are not the center of Serenity's long-term AI supply-chain framework. Trea
 - `ROK`
 - `TER`
 - `CGNX`
+- ESMT (`3006` as written; exchange mapping unverified)
+- Etron
+- Taiyo Yuden (`6976` as written)
+- Murata
+- `RIOT`
+- `HUT`
 
 ## Maintenance Checklist
 
